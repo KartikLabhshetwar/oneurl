@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { profileService } from "@/lib/services/profile.service";
 import type { Metadata } from "next";
+import Image from "next/image";
 import LinkClickTracker from "./link-click-tracker";
+import { getAvatarUrl } from "@/lib/utils";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -17,19 +19,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const avatarUrl = getAvatarUrl(user);
   return {
     title: `${user.name} | OneURL`,
     description: user.bio || `Visit ${user.name}'s profile on OneURL`,
     openGraph: {
       title: `${user.name} | OneURL`,
       description: user.bio || `Visit ${user.name}'s profile on OneURL`,
-      images: user.avatarUrl ? [user.avatarUrl] : [],
+      images: avatarUrl ? [avatarUrl] : [],
     },
     twitter: {
       card: "summary",
       title: `${user.name} | OneURL`,
       description: user.bio || `Visit ${user.name}'s profile on OneURL`,
-      images: user.avatarUrl ? [user.avatarUrl] : [],
+      images: avatarUrl ? [avatarUrl] : [],
     },
   };
 }
@@ -49,10 +52,12 @@ export default async function PublicProfilePage({ params }: Props) {
       <div className="w-full max-w-md">
         <div className="rounded-2xl border bg-card p-8 shadow-lg">
           <div className="flex flex-col items-center space-y-4">
-            {user.avatarUrl && (
-              <img
-                src={user.avatarUrl}
+            {getAvatarUrl(user) && (
+              <Image
+                src={getAvatarUrl(user)!}
                 alt={user.name}
+                width={96}
+                height={96}
                 className="h-24 w-24 rounded-full border-2"
               />
             )}

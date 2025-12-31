@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { SignInButton } from "@/components/sign-in-button";
+import Link from "next/link";
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -25,9 +26,7 @@ export default async function HomePage() {
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <h1 className="text-lg font-semibold">OneURL</h1>
-          <Button asChild>
-            <Link href="/api/auth/sign-in/google">Sign In</Link>
-          </Button>
+          <SignInButton>Sign In</SignInButton>
         </div>
       </header>
 
@@ -42,15 +41,17 @@ export default async function HomePage() {
               in one place. Open source alternative to Linktree.
             </p>
             <div className="flex gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link href="/api/auth/sign-in/google">
-                  Get Started with Google
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                  View on GitHub
-                </a>
+              <SignInButton size="lg">
+                Get Started with Google
+              </SignInButton>
+              <Button
+                size="lg"
+                variant="outline"
+                render={
+                  <Link href="https://github.com/KartikLabhshetwar/oneurl" target="_blank" rel="noopener noreferrer" />
+                }
+              >
+                View on GitHub
               </Button>
             </div>
           </div>

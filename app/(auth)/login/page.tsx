@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { SignInButton } from "@/components/sign-in-button";
 
 export default async function LoginPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -29,9 +28,9 @@ export default async function LoginPage() {
             Sign in to create your profile page
           </p>
         </div>
-        <Button className="w-full" size="lg" asChild>
-          <Link href="/api/auth/sign-in/google">Sign in with Google</Link>
-        </Button>
+        <SignInButton className="w-full" size="lg">
+          Sign in with Google
+        </SignInButton>
       </div>
     </div>
   );

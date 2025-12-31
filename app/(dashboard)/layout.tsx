@@ -2,8 +2,8 @@ import { requireAuth } from "@/lib/auth-guard";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
+import { getAvatarUrl } from "@/lib/utils";
 
 export default async function DashboardLayout({
   children,
@@ -54,11 +54,13 @@ export default async function DashboardLayout({
         </nav>
         <div className="mt-auto border-t p-4">
           <div className="flex items-center gap-3 px-3">
-            {user.avatarUrl && (
-              <img
-                src={user.avatarUrl}
+            {getAvatarUrl(user) && (
+              <Image
+                src={getAvatarUrl(user)!}
                 alt={user.name}
                 className="h-8 w-8 rounded-full"
+                width={32}
+                height={32}
               />
             )}
             <div className="flex-1 min-w-0">

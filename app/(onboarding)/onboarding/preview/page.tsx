@@ -1,7 +1,8 @@
 import { requireAuth } from "@/lib/auth-guard";
 import { profileService } from "@/lib/services/profile.service";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import PreviewClient from "./preview-client";
+import { getAvatarUrl } from "@/lib/utils";
 
 export default async function PreviewPage() {
   const session = await requireAuth();
@@ -27,10 +28,12 @@ export default async function PreviewPage() {
       <div className="mx-auto w-full max-w-md">
         <div className="rounded-2xl border bg-card p-8 shadow-lg">
           <div className="flex flex-col items-center space-y-4">
-            {profile.avatarUrl && (
-              <img
-                src={profile.avatarUrl}
+            {getAvatarUrl(profile) && (
+              <Image
+                src={getAvatarUrl(profile)!}
                 alt="Avatar"
+                width={96}
+                height={96}
                 className="h-24 w-24 rounded-full"
               />
             )}
@@ -51,7 +54,7 @@ export default async function PreviewPage() {
 
           {profile.profile?.links && profile.profile.links.length > 0 && (
             <div className="mt-8 space-y-2">
-              {profile.profile.links.map((link: any) => (
+              {profile.profile.links.map((link) => (
                 <a
                   key={link.id}
                   href={link.url}
