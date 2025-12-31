@@ -4,13 +4,23 @@ import { useState } from "react";
 import { UploadButton } from "@uploadthing/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { authClient } from "@/lib/auth-client";
+import { Form } from "@/components/ui/form";
+import { Field, FieldLabel, FieldControl } from "@/components/ui/field";
+import { Fieldset } from "@/components/ui/fieldset";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogClose,
+} from "@/components/ui/alert-dialog";
 import type { OurFileRouter } from "@/lib/uploadthing";
-import { useUpdateProfile, useUpdateAvatar } from "@/lib/hooks/use-profile";
+import { useUpdateProfile, useUpdateAvatar, useDeleteAccount } from "@/lib/hooks/use-profile";
 
 export default function SettingsClient({
   initialProfile,
@@ -22,9 +32,11 @@ export default function SettingsClient({
   const [username, setUsername] = useState(initialProfile.username);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialProfile.avatarUrl);
   const [isUploading, setIsUploading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const updateProfile = useUpdateProfile();
   const updateAvatar = useUpdateAvatar();
+  const deleteAccount = useDeleteAccount();
 
   const handleUploadComplete = async (res: { url: string }[]) => {
     if (res && res[0]?.url) {
@@ -35,13 +47,13 @@ export default function SettingsClient({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
     await updateProfile.mutateAsync({ name, bio, username });
   };
 
-  const handleSignOut = async () => {
-    await authClient.signOut();
-    window.location.href = "/";
+  const handleDeleteAccount = async () => {
+    await deleteAccount.mutateAsync();
   };
 
   return (
@@ -101,38 +113,57 @@ export default function SettingsClient({
           <CardHeader>
             <CardTitle>Profile Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={updateProfile.isPending}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                disabled={updateProfile.isPending}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={4}
-                disabled={updateProfile.isPending}
-              />
-            </div>
-            <Button onClick={handleSave} disabled={updateProfile.isPending}>
-              {updateProfile.isPending ? "Saving..." : "Save Changes"}
-            </Button>
+          <CardContent>
+            <Form onSubmit={handleSave}>
+              <Fieldset>
+                <Field>
+                  <FieldLabel htmlFor="name">Name</FieldLabel>
+                  <FieldControl
+                    render={(props) => (
+                      <Input
+                        {...props}
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={updateProfile.isPending}
+                      />
+                    )}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="username">Username</FieldLabel>
+                  <FieldControl
+                    render={(props) => (
+                      <Input
+                        {...props}
+                        id="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                        disabled={updateProfile.isPending}
+                      />
+                    )}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="bio">Bio</FieldLabel>
+                  <FieldControl
+                    render={(props) => (
+                      <Textarea
+                        {...props}
+                        id="bio"
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        rows={4}
+                        disabled={updateProfile.isPending}
+                      />
+                    )}
+                  />
+                </Field>
+                <Button type="submit" disabled={updateProfile.isPending}>
+                  {updateProfile.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </Fieldset>
+            </Form>
           </CardContent>
         </Card>
 
@@ -141,12 +172,41 @@ export default function SettingsClient({
             <CardTitle>Danger Zone</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button variant="destructive-outline" onClick={handleSignOut}>
-              Sign Out
+            <Button
+              variant="destructive-outline"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={deleteAccount.isPending}
+            >
+              Remove Account
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove your account? This action cannot be undone. All your data, links, and profile will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose>
+              <Button variant="outline" disabled={deleteAccount.isPending}>
+                Cancel
+              </Button>
+            </AlertDialogClose>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={deleteAccount.isPending}
+            >
+              {deleteAccount.isPending ? "Removing..." : "Remove Account"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,8 @@ import {
   DialogFooter,
   DialogPanel,
 } from "@/components/ui/dialog";
+import { Form } from "@/components/ui/form";
+import { Field, FieldLabel, FieldControl, FieldError } from "@/components/ui/field";
 import { linkSchema } from "@/lib/validations/schemas";
 import { toastError } from "@/lib/toast";
 import type { Link } from "@/lib/hooks/use-links";
@@ -40,8 +41,8 @@ export function LinkDialog({
 }: LinkDialogProps) {
   const [formTitle, setFormTitle] = useState(initialData?.title ?? "");
   const [formUrl, setFormUrl] = useState(initialData?.url ?? "");
-  const [formError, setFormError] = useState("");
-  const formRef = useRef<HTMLFormElement>(null);
+  const [titleError, setTitleError] = useState("");
+  const [urlError, setUrlError] = useState("");
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
@@ -52,29 +53,36 @@ export function LinkDialog({
         setFormTitle("");
         setFormUrl("");
       }
-      setFormError("");
+      setTitleError("");
+      setUrlError("");
     }
     onOpenChange(newOpen);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError("");
+    setTitleError("");
+    setUrlError("");
 
     try {
-      linkSchema.parse({ title: formTitle, url: formUrl });
-      await onSubmit({ title: formTitle, url: formUrl });
+      const validated = linkSchema.parse({ title: formTitle, url: formUrl });
+      await onSubmit(validated);
       if (!initialData) {
         setFormTitle("");
         setFormUrl("");
-        formRef.current?.reset();
       }
     } catch (error) {
       if (error && typeof error === "object" && "issues" in error) {
-        const zodError = error as { issues: Array<{ message: string }> };
-        const errorMessage = zodError.issues[0]?.message || "Invalid input";
-        setFormError(errorMessage);
-        toastError("Invalid input", errorMessage);
+        const zodError = error as { issues: Array<{ path: (string | number)[]; message: string }> };
+        zodError.issues.forEach((issue) => {
+          if (issue.path[0] === "title") {
+            setTitleError(issue.message);
+          } else if (issue.path[0] === "url") {
+            setUrlError(issue.message);
+          }
+        });
+        const firstError = zodError.issues[0]?.message || "Invalid input";
+        toastError("Invalid input", firstError);
       }
     }
   };
@@ -84,9 +92,9 @@ export function LinkDialog({
     if (!initialData) {
       setFormTitle("");
       setFormUrl("");
-      formRef.current?.reset();
     }
-    setFormError("");
+    setTitleError("");
+    setUrlError("");
   };
 
   return (
@@ -96,42 +104,51 @@ export function LinkDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <form ref={formRef} onSubmit={handleSubmit} id="link-form">
+        <Form onSubmit={handleSubmit}>
           <DialogPanel>
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="link-title">Title</Label>
-                <Input
-                  id="link-title"
-                  value={formTitle}
-                  onChange={(e) => {
-                    setFormTitle(e.target.value);
-                    setFormError("");
-                  }}
-                  placeholder="e.g., My Portfolio"
-                  aria-invalid={formError ? "true" : undefined}
-                  disabled={isPending}
-                  autoFocus
+              <Field>
+                <FieldLabel htmlFor="link-title">Title</FieldLabel>
+                <FieldControl
+                  render={(props) => (
+                    <Input
+                      {...props}
+                      id="link-title"
+                      value={formTitle}
+                      onChange={(e) => {
+                        setFormTitle(e.target.value);
+                        setTitleError("");
+                      }}
+                      placeholder="e.g., My Portfolio"
+                      aria-invalid={titleError ? "true" : undefined}
+                      disabled={isPending}
+                      autoFocus
+                    />
+                  )}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="link-url">URL</Label>
-                <Input
-                  id="link-url"
-                  type="url"
-                  value={formUrl}
-                  onChange={(e) => {
-                    setFormUrl(e.target.value);
-                    setFormError("");
-                  }}
-                  placeholder="https://example.com"
-                  aria-invalid={formError ? "true" : undefined}
-                  disabled={isPending}
+                {titleError && <FieldError>{titleError}</FieldError>}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="link-url">URL</FieldLabel>
+                <FieldControl
+                  render={(props) => (
+                    <Input
+                      {...props}
+                      id="link-url"
+                      type="url"
+                      value={formUrl}
+                      onChange={(e) => {
+                        setFormUrl(e.target.value);
+                        setUrlError("");
+                      }}
+                      placeholder="https://example.com"
+                      aria-invalid={urlError ? "true" : undefined}
+                      disabled={isPending}
+                    />
+                  )}
                 />
-              </div>
-              {formError && (
-                <p className="text-sm text-destructive">{formError}</p>
-              )}
+                {urlError && <FieldError>{urlError}</FieldError>}
+              </Field>
             </div>
           </DialogPanel>
           <DialogFooter>
@@ -151,7 +168,7 @@ export function LinkDialog({
                 : submitLabel}
             </Button>
           </DialogFooter>
-        </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

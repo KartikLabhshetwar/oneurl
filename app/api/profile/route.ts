@@ -55,3 +55,24 @@ export async function PATCH(req: Request) {
     );
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await requireAuth();
+    const { db } = await import("@/lib/db");
+
+    await db.user.delete({
+      where: { id: session.user.id },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("redirect")) {
+      throw error;
+    }
+    return NextResponse.json(
+      { error: "Failed to delete account" },
+      { status: 500 }
+    );
+  }
+}

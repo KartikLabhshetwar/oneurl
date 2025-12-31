@@ -79,3 +79,25 @@ export function useUpdateAvatar() {
   });
 }
 
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/profile", {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete account");
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      window.location.href = "/";
+    },
+    onError: (err) => {
+      toastError("Failed to delete account", err.message);
+    },
+  });
+}
+

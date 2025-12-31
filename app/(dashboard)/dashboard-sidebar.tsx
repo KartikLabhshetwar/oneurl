@@ -8,6 +8,7 @@ import {
   Link2,
   BarChart3,
   Settings,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,7 +21,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  Menu,
+  MenuTrigger,
+  MenuPopup,
+  MenuItem,
+} from "@/components/ui/menu";
 import { getAvatarUrl } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 interface DashboardSidebarProps {
   user: {
@@ -97,25 +105,41 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center gap-3 px-3 py-2">
-          {avatarUrl && (
-            <Image
-              src={avatarUrl}
-              alt={user.name}
-              width={32}
-              height={32}
-              className="h-8 w-8 rounded-full"
-            />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user.name}</p>
-            {user.username && (
-              <p className="text-xs text-muted-foreground truncate">
-                @{user.username}
-              </p>
+        <Menu>
+          <MenuTrigger
+            className="flex w-full items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
+          >
+            {avatarUrl && (
+              <Image
+                src={avatarUrl}
+                alt={user.name}
+                width={32}
+                height={32}
+                className="h-8 w-8 rounded-full"
+              />
             )}
-          </div>
-        </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-medium truncate">{user.name}</p>
+              {user.username && (
+                <p className="text-xs text-muted-foreground truncate">
+                  @{user.username}
+                </p>
+              )}
+            </div>
+          </MenuTrigger>
+          <MenuPopup>
+            <MenuItem
+              variant="destructive"
+              onSelect={async () => {
+                await authClient.signOut();
+                window.location.href = "/";
+              }}
+            >
+              <LogOut />
+              <span>Sign Out</span>
+            </MenuItem>
+          </MenuPopup>
+        </Menu>
       </SidebarFooter>
     </Sidebar>
   );
