@@ -5,7 +5,7 @@ import { SignInButton } from "@/components/sign-in-button";
 import { AuthSplitLayout } from "@/components/auth-split-layout";
 import Link from "next/link";
 
-export default async function LoginPage() {
+export default async function SignUpPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (session) {
@@ -23,10 +23,10 @@ export default async function LoginPage() {
 
   return (
     <AuthSplitLayout
-      heading="Welcome back"
-      description="Sign in to your account to access your links and analytics"
-      promotionalTitle="Your links, one place"
-      promotionalDescription="Join thousands of creators, businesses, and professionals who use OneURL to share their most important links with the world."
+      heading="Get started"
+      description="Create your account in seconds and start sharing your links with the world"
+      promotionalTitle="One link to rule them all"
+      promotionalDescription="Stop sending multiple links. Create a beautiful, customizable profile page that showcases everything you want to share all in one place."
       showBackButton={true}
       backHref="/"
     >
@@ -54,7 +54,7 @@ export default async function LoginPage() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign in with Google
+          Sign up with Google
         </SignInButton>
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -62,14 +62,14 @@ export default async function LoginPage() {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Secure authentication
+              Quick & secure signup
             </span>
           </div>
         </div>
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-zinc-900 hover:text-zinc-800 hover:underline font-semibold transition-colors">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-zinc-900 hover:text-zinc-800 hover:underline font-semibold transition-colors">
+            Sign in
           </Link>
         </p>
       </div>

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Link2,
@@ -22,11 +23,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  Menu,
-  MenuTrigger,
-  MenuPopup,
-  MenuItem,
-} from "@/components/ui/menu";
+  Popover,
+  PopoverTrigger,
+  PopoverPopup,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
 
@@ -41,7 +42,9 @@ interface DashboardSidebarProps {
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const avatarUrl = getAvatarUrl(user);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const menuItems = [
     {
@@ -105,8 +108,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <Menu>
-          <MenuTrigger
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger
             className="flex w-full items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent transition-colors"
           >
             {avatarUrl && (
@@ -126,20 +129,29 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                 </p>
               )}
             </div>
-          </MenuTrigger>
-          <MenuPopup>
-            <MenuItem
+          </PopoverTrigger>
+          <PopoverPopup>
+            <Button
               variant="destructive"
-              onSelect={async () => {
-                await authClient.signOut();
-                window.location.href = "/";
+              className="w-full justify-start"
+              onClick={async () => {
+                setIsPopoverOpen(false);
+                try {
+                  await authClient.signOut();
+                  router.push("/");
+                  router.refresh();
+                } catch (error) {
+                  console.error("Sign out error:", error);
+                  router.push("/");
+                  router.refresh();
+                }
               }}
             >
               <LogOut />
               <span>Sign Out</span>
-            </MenuItem>
-          </MenuPopup>
-        </Menu>
+            </Button>
+          </PopoverPopup>
+        </Popover>
       </SidebarFooter>
     </Sidebar>
   );

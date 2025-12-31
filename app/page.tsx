@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignInButton } from "@/components/sign-in-button";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -35,7 +34,9 @@ export default async function HomePage() {
               className="h-20 w-20"
             />
           </Link>
-          <SignInButton>Sign In</SignInButton>
+          <Button variant="outline" render={<Link href="/login" />}>
+            Sign In
+          </Button>
         </div>
       </header>
 
@@ -59,9 +60,12 @@ export default async function HomePage() {
               in one place. Open source alternative to Linktree.
             </p>
             <div className="flex gap-4 justify-center">
-              <SignInButton size="lg">
+              <Button
+                size="lg"
+                render={<Link href="/signup" />}
+              >
                 Get Started with Google
-              </SignInButton>
+              </Button>
               <Button
                 size="lg"
                 variant="outline"
