@@ -61,9 +61,15 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex h-16 items-center px-6">
-          <h1 className="text-lg font-semibold">OneURL</h1>
-        </div>
+        <Link href="/dashboard" className="flex h-16 items-center px-6 justify-center">
+          <Image
+            src="/logo.png"
+            alt="OneURL"
+            width={128}
+            height={128}
+            className="h-20 w-20"
+          />
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

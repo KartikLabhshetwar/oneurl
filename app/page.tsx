@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/sign-in-button";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -25,7 +26,15 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col">
       <header className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <h1 className="text-lg font-semibold">OneURL</h1>
+          <Link href="/" className="flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="OneURL"
+              width={128}
+              height={128}
+              className="h-20 w-20"
+            />
+          </Link>
           <SignInButton>Sign In</SignInButton>
         </div>
       </header>
@@ -33,6 +42,15 @@ export default async function HomePage() {
       <main className="flex-1">
         <div className="container mx-auto flex flex-col items-center justify-center px-4 py-32">
           <div className="max-w-2xl text-center space-y-6">
+            <div className="flex justify-center mb-4">
+              <Image
+                src="/logo.png"
+                alt="OneURL"
+                width={128}
+                height={128}
+                className="h-32 w-32"
+              />
+            </div>
             <h1 className="text-5xl font-bold tracking-tight">
               One URL for all your links
             </h1>

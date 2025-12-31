@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 const steps = [
   { path: "/onboarding/username", label: "Username", step: 1 },
@@ -24,8 +25,17 @@ export default function OnboardingLayout({
     <div className="flex min-h-screen flex-col">
       <div className="border-b">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <h1 className="text-lg font-semibold">OneURL</h1>
-          <Button variant="ghost" size="sm" asChild>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="OneURL"
+              width={128}
+              height={128}
+              className="h-20 w-20"
+            />
+            <h1 className="text-lg font-semibold">OneURL</h1>
+          </Link>
+          <Button variant="ghost" size="sm" render={<Link href="/">Skip for now</Link>}>
             <Link href="/">Skip for now</Link>
           </Button>
         </div>
