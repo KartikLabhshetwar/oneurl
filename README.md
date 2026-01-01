@@ -142,7 +142,7 @@ oneurl/
    - Add your links
    - Preview your profile
 3. Dashboard - Manage your profile, links, and view analytics
-4. Share - Your profile is available at `yoursite.com/yourusername`
+4. Share - Your profile is available at `oneurl.live/yourusername`
 
 ## Deployment
 

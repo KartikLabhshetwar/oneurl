@@ -9,8 +9,8 @@ export default function NotFound() {
         <p className="text-muted-foreground">
           This profile doesn't exist or hasn't been published yet.
         </p>
-        <Button asChild>
-          <Link href="/">Go Home</Link>
+        <Button render={<Link href="/" />}>
+          Go Home
         </Button>
       </div>
     </div>

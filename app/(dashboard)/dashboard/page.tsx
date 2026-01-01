@@ -25,10 +25,8 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {profile?.username ? (
-              <Button asChild>
-                <Link href={`/${profile.username}`} target="_blank">
-                  View Profile
-                </Link>
+              <Button render={<Link href={`/${profile.username}`} target="_blank" />}>
+                View Profile
               </Button>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -46,8 +44,8 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline">
-              <Link href="/dashboard/links">Manage Links</Link>
+            <Button render={<Link href="/dashboard/links" />} variant="outline">
+              Manage Links
             </Button>
           </CardContent>
         </Card>
@@ -58,8 +56,8 @@ export default async function DashboardPage() {
             <CardDescription>Track your link performance</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline">
-              <Link href="/dashboard/analytics">View Analytics</Link>
+            <Button render={<Link href="/dashboard/analytics" />} variant="outline">
+              View Analytics
             </Button>
           </CardContent>
         </Card>

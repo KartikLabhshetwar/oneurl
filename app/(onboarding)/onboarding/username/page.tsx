@@ -118,7 +118,7 @@ export default function UsernamePage() {
         <div className="space-y-2 text-center">
           <h2 className="text-2xl font-semibold">Choose your username</h2>
           <p className="text-muted-foreground">
-            This will be your unique profile URL: oneurl.com/{username || "username"}
+            This will be your unique profile URL: oneurl.live/{username || "username"}
           </p>
         </div>
 
@@ -132,7 +132,7 @@ export default function UsernamePage() {
               render={(props) => (
                 <InputGroup className="transition-all duration-200">
                   <InputGroupAddon align="inline-start">
-                    <InputGroupText>oneurl.com/</InputGroupText>
+                    <InputGroupText>oneurl.live/</InputGroupText>
                   </InputGroupAddon>
                   <InputGroupInput
                     {...props}

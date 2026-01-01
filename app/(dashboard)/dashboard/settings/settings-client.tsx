@@ -150,13 +150,13 @@ export default function SettingsClient({
                 <Field>
                   <FieldLabel htmlFor="username">Username</FieldLabel>
                   <FieldDescription>
-                    Your unique profile URL will be: oneurl.com/{username || "username"}
+                    Your unique profile URL will be: oneurl.live/{username || "username"}
                   </FieldDescription>
                   <FieldControl
                     render={(props) => (
                       <InputGroup className="transition-all duration-200">
                         <InputGroupAddon align="inline-start">
-                          <InputGroupText>oneurl.com/</InputGroupText>
+                          <InputGroupText>oneurl.live/</InputGroupText>
                         </InputGroupAddon>
                         <InputGroupInput
                           {...props}
