@@ -3,6 +3,8 @@ import { requireAuth } from "@/lib/auth-guard";
 import { linkService } from "@/lib/services/link.service";
 import { linkUpdateSchema } from "@/lib/validations/schemas";
 import { db } from "@/lib/db";
+import urlMetadata from "url-metadata";
+import { fetchAndUploadLinkPreviewImage, deleteLinkPreviewImage } from "@/lib/utils/link-preview-image";
 
 export async function PATCH(
   req: Request,
@@ -27,6 +29,41 @@ export async function PATCH(
     }
 
     const data = linkUpdateSchema.parse(body);
+    
+    if (data.url && data.url !== link.url && !link.icon) {
+      const oldPreviewImageUrl = (link as { previewImageUrl?: string | null }).previewImageUrl;
+      
+      try {
+        const metadata = await urlMetadata(data.url, {
+          timeout: 10000,
+          requestHeaders: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          },
+        });
+
+        data.previewDescription = metadata["og:description"] || metadata.description || null;
+
+        const imageUrl = metadata["og:image"] || metadata.image;
+        if (imageUrl && typeof imageUrl === "string") {
+          const newPreviewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, link.id);
+          if (newPreviewImageUrl) {
+            data.previewImageUrl = newPreviewImageUrl;
+            
+            if (oldPreviewImageUrl) {
+              await deleteLinkPreviewImage(oldPreviewImageUrl);
+            }
+          }
+        } else if (oldPreviewImageUrl) {
+          await deleteLinkPreviewImage(oldPreviewImageUrl);
+          data.previewImageUrl = null;
+          data.previewDescription = null;
+        }
+      } catch (error) {
+        console.error("Failed to fetch and store preview data:", error);
+      }
+    }
+
     await linkService.update(id, data);
 
     return NextResponse.json({ success: true });
@@ -68,6 +105,11 @@ export async function DELETE(
 
     if (profile?.userId !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    const previewImageUrl = (link as { previewImageUrl?: string | null }).previewImageUrl;
+    if (previewImageUrl) {
+      await deleteLinkPreviewImage(previewImageUrl);
     }
 
     await linkService.delete(id);

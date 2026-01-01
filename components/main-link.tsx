@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { Link } from "@/lib/hooks/use-links";
 
@@ -11,44 +10,9 @@ interface MainLinkProps {
   description?: string | null;
 }
 
-interface LinkPreview {
-  title: string | null;
-  description: string | null;
-  image: string | null;
-  url: string;
-}
-
 export function MainLink({ link, onClick, showDescription = false, description }: MainLinkProps) {
-  const [preview, setPreview] = useState<LinkPreview | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchPreview = async () => {
-      try {
-        const response = await fetch(`/api/link-preview?url=${encodeURIComponent(link.url)}`);
-        if (response.ok && isMounted) {
-          const data = await response.json();
-          setPreview({
-            title: data.title,
-            description: data.description,
-            image: data.image,
-            url: data.url,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch preview:", error);
-      }
-    };
-
-    fetchPreview();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [link.url]);
-
-  const displayDescription = preview?.description || description;
+  const displayImageUrl = link.previewImageUrl;
+  const displayDescription = link.previewDescription || description;
 
   return (
     <a
@@ -59,16 +23,21 @@ export function MainLink({ link, onClick, showDescription = false, description }
       className="relative rounded-xl border border-zinc-200 bg-white transition-all cursor-pointer hover:border-zinc-300 hover:shadow-sm hover:shadow-zinc-200/50 block p-3 group"
     >
       <div className="flex gap-3">
-        {preview?.image && (
+        {displayImageUrl && (
           <div className="w-1/3 shrink-0">
             <div className="aspect-[4/3] bg-zinc-100 rounded-lg overflow-hidden relative">
               <Image
-                src={preview.image}
+                src={displayImageUrl}
                 alt={link.title}
                 fill
                 className="object-cover select-none"
                 draggable={false}
                 unoptimized
+                onError={(e) => {
+                  console.error("Failed to load image:", displayImageUrl);
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = "none";
+                }}
               />
             </div>
           </div>

@@ -97,17 +97,19 @@ model Profile {
 }
 
 model Link {
-  id        String      @id @default(cuid())
-  profileId String
-  profile   Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  title     String
-  url       String
-  icon      String?
-  position  Int
-  isActive  Boolean     @default(true)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  clicks    LinkClick[]
+  id                String      @id @default(cuid())
+  profileId         String
+  profile           Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title             String
+  url               String
+  icon              String?
+  previewImageUrl   String?
+  previewDescription String?
+  position          Int
+  isActive          Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  clicks            LinkClick[]
 
   @@index([profileId])
   @@map("link")

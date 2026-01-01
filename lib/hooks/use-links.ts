@@ -9,6 +9,8 @@ export type Link = {
   title: string;
   url: string;
   icon?: string | null;
+  previewImageUrl?: string | null;
+  previewDescription?: string | null;
   position: number;
   isActive: boolean;
 };

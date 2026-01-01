@@ -34,6 +34,8 @@ export const linkUpdateSchema = linkSchema
     id: z.string().optional(),
     position: z.number().int().min(0),
     isActive: z.boolean().default(true),
+    previewImageUrl: z.string().url().nullable().optional(),
+    previewDescription: z.string().nullable().optional(),
   })
   .partial();
 

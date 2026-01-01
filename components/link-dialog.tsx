@@ -177,8 +177,25 @@ export function LinkDialog({
     setUrlError("");
 
     try {
+      // Auto-generate title for icon links if not provided
+      let titleToUse = formTitle;
+      if (isIconLink && !titleToUse.trim()) {
+        if (preview?.title) {
+          titleToUse = preview.title;
+        } else {
+          // Generate title from URL domain
+          try {
+            const urlObj = new URL(formUrl.startsWith("http") ? formUrl : `https://${formUrl}`);
+            const domain = urlObj.hostname.replace("www.", "");
+            titleToUse = domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
+          } catch {
+            titleToUse = "Link";
+          }
+        }
+      }
+
       const validated = linkSchema.parse({ 
-        title: formTitle, 
+        title: titleToUse, 
         url: formUrl,
         icon: isIconLink ? "🔗" : undefined
       });
@@ -230,26 +247,45 @@ export function LinkDialog({
           <DialogPanel>
             <div className="space-y-4 py-2">
               <Field>
-                <FieldLabel htmlFor="link-title">Title</FieldLabel>
-                <FieldControl
-                  render={(props) => (
-                    <Input
-                      {...props}
-                      id="link-title"
-                      value={formTitle}
-                      onChange={(e) => {
-                        setFormTitle(e.target.value);
-                        setTitleError("");
-                      }}
-                      placeholder="e.g., My Portfolio"
-                      aria-invalid={titleError ? "true" : undefined}
-                      disabled={isPending}
-                      autoFocus
-                    />
-                  )}
-                />
-                {titleError && <FieldError>{titleError}</FieldError>}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <FieldLabel htmlFor="icon-link-toggle">Icon Link</FieldLabel>
+                    <FieldDescription>
+                      Display as a social media icon instead of a preview card
+                    </FieldDescription>
+                  </div>
+                  <Switch
+                    id="icon-link-toggle"
+                    checked={isIconLink}
+                    onCheckedChange={setIsIconLink}
+                    disabled={isPending}
+                  />
+                </div>
               </Field>
+
+              {!isIconLink && (
+                <Field>
+                  <FieldLabel htmlFor="link-title">Title</FieldLabel>
+                  <FieldControl
+                    render={(props) => (
+                      <Input
+                        {...props}
+                        id="link-title"
+                        value={formTitle}
+                        onChange={(e) => {
+                          setFormTitle(e.target.value);
+                          setTitleError("");
+                        }}
+                        placeholder="e.g., My Portfolio"
+                        aria-invalid={titleError ? "true" : undefined}
+                        disabled={isPending}
+                        autoFocus
+                      />
+                    )}
+                  />
+                  {titleError && <FieldError>{titleError}</FieldError>}
+                </Field>
+              )}
               <Field>
                 <FieldLabel htmlFor="link-url">Profile URL</FieldLabel>
                 <FieldControl
@@ -300,23 +336,6 @@ export function LinkDialog({
                   )}
                 />
                 {urlError && <FieldError>{urlError}</FieldError>}
-              </Field>
-              
-              <Field>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <FieldLabel htmlFor="icon-link-toggle">Icon Link</FieldLabel>
-                    <FieldDescription>
-                      Display as a social media icon instead of a preview card
-                    </FieldDescription>
-                  </div>
-                  <Switch
-                    id="icon-link-toggle"
-                    checked={isIconLink}
-                    onCheckedChange={setIsIconLink}
-                    disabled={isPending}
-                  />
-                </div>
               </Field>
               
               {preview && !isIconLink && (
