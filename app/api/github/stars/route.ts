@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
 
 const GITHUB_API_BASE = "https://api.github.com/repos";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+
+function buildHeaders() {
+  const headers: HeadersInit = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "OneURL",
+  };
+
+  if (GITHUB_TOKEN) {
+    headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+  }
+
+  return headers;
+}
 
 export async function GET(req: Request) {
   try {
@@ -14,11 +28,15 @@ export async function GET(req: Request) {
       );
     }
 
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+      return NextResponse.json(
+        { error: "Invalid repository format. Expected: owner/repo" },
+        { status: 400 }
+      );
+    }
+
     const response = await fetch(`${GITHUB_API_BASE}/${repo}`, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "OneURL",
-      },
+      headers: buildHeaders(),
       next: {
         revalidate: 3600,
       },
@@ -31,7 +49,28 @@ export async function GET(req: Request) {
           { status: 404 }
         );
       }
-      throw new Error(`GitHub API error: ${response.status}`);
+
+      if (response.status === 403 || response.status === 429) {
+        const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
+        const rateLimitReset = response.headers.get("x-ratelimit-reset");
+        
+        return NextResponse.json(
+          {
+            error: "GitHub API rate limit exceeded",
+            rateLimitRemaining: rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : null,
+            rateLimitReset: rateLimitReset ? parseInt(rateLimitReset, 10) : null,
+          },
+          { status: 429 }
+        );
+      }
+
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        {
+          error: errorData.message || `GitHub API error: ${response.status}`,
+        },
+        { status: response.status }
+      );
     }
 
     const data = await response.json();
