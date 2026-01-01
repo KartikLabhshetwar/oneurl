@@ -1,32 +1,34 @@
 import { NextResponse } from "next/server";
 import urlMetadata from "url-metadata";
+import { getFallbackPreviewImage } from "@/lib/utils/link-preview-image";
 
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const url = searchParams.get("url");
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get("url");
 
-    if (!url) {
+  if (!url) {
+    return NextResponse.json(
+      { error: "URL parameter is required" },
+      { status: 400 }
+    );
+  }
+
+  let validUrl: string;
+  try {
+    const urlObj = new URL(url);
+    validUrl = urlObj.toString();
+  } catch {
+    try {
+      validUrl = new URL(`https://${url}`).toString();
+    } catch {
       return NextResponse.json(
-        { error: "URL parameter is required" },
+        { error: "Invalid URL format" },
         { status: 400 }
       );
     }
+  }
 
-    let validUrl: string;
-    try {
-      const urlObj = new URL(url);
-      validUrl = urlObj.toString();
-    } catch {
-      try {
-        validUrl = new URL(`https://${url}`).toString();
-      } catch {
-        return NextResponse.json(
-          { error: "Invalid URL format" },
-          { status: 400 }
-        );
-      }
-    }
+  try {
 
     const metadata = await urlMetadata(validUrl, {
       timeout: 10000,
@@ -46,26 +48,40 @@ export async function GET(req: Request) {
       }
     }
 
+    let image = metadata["og:image"] || metadata.image || null;
+    if (!image) {
+      const fallback = await getFallbackPreviewImage();
+      image = fallback;
+    }
+
     return NextResponse.json({
       title: metadata["og:title"] || metadata.title || null,
       description: metadata["og:description"] || metadata.description || null,
-      image: metadata["og:image"] || metadata.image || null,
+      image,
       logo: metadata["og:logo"] || metadata.logo || favicon || null,
       url: validUrl,
     });
   } catch (error) {
     if (error instanceof Error && error.message.includes("timeout")) {
-      return NextResponse.json(
-        { error: "Request timeout" },
-        { status: 408 }
-      );
+      const fallback = await getFallbackPreviewImage();
+      return NextResponse.json({
+        title: null,
+        description: null,
+        image: fallback,
+        logo: null,
+        url: validUrl,
+      });
     }
 
     console.error("Error fetching link preview:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch link preview" },
-      { status: 500 }
-    );
+    const fallback = await getFallbackPreviewImage();
+    return NextResponse.json({
+      title: null,
+      description: null,
+      image: fallback,
+      logo: null,
+      url: validUrl,
+    });
   }
 }
 

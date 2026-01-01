@@ -4,7 +4,7 @@ import { linkService } from "@/lib/services/link.service";
 import { db } from "@/lib/db";
 import { linkSchema } from "@/lib/validations/schemas";
 import urlMetadata from "url-metadata";
-import { fetchAndUploadLinkPreviewImage } from "@/lib/utils/link-preview-image";
+import { fetchAndUploadLinkPreviewImage, getFallbackPreviewImage } from "@/lib/utils/link-preview-image";
 
 export async function GET() {
   try {
@@ -81,11 +81,16 @@ export async function POST(req: Request) {
                   let previewImageUrl: string | null = null;
                   
                   if (imageUrl && typeof imageUrl === "string") {
-                    console.log(`[Link Preview] Fetching image for ${link.url}: ${imageUrl}`);
-                    previewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, created.id);
+                    console.log(`[Link Preview] Found image for ${link.url}: ${imageUrl}`);
+                    previewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, created.id, link.url);
                     console.log(`[Link Preview] Uploaded image URL: ${previewImageUrl}`);
                   } else {
                     console.log(`[Link Preview] No image found for ${link.url}`);
+                  }
+
+                  if (!previewImageUrl) {
+                    previewImageUrl = await getFallbackPreviewImage();
+                    console.log(`[Link Preview] Using fallback image: ${previewImageUrl}`);
                   }
 
                   await db.link.update({
@@ -98,6 +103,18 @@ export async function POST(req: Request) {
                   console.log(`[Link Preview] Updated link ${created.id} with preview data`);
                 } catch (error) {
                   console.error("[Link Preview] Failed to fetch and store preview data:", error);
+                  try {
+                    const fallback = await getFallbackPreviewImage();
+                    if (fallback) {
+                      await db.link.update({
+                        where: { id: created.id },
+                        data: { previewImageUrl: fallback },
+                      });
+                      console.log(`[Link Preview] Updated link ${created.id} with fallback image`);
+                    }
+                  } catch (fallbackError) {
+                    console.error("[Link Preview] Failed to set fallback image:", fallbackError);
+                  }
                 }
               })();
             }
@@ -135,11 +152,16 @@ export async function POST(req: Request) {
           let previewImageUrl: string | null = null;
           
           if (imageUrl && typeof imageUrl === "string") {
-            console.log(`[Link Preview] Fetching image for ${validated.url}: ${imageUrl}`);
-            previewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, link.id);
+            console.log(`[Link Preview] Found image for ${validated.url}: ${imageUrl}`);
+            previewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, link.id, validated.url);
             console.log(`[Link Preview] Uploaded image URL: ${previewImageUrl}`);
           } else {
             console.log(`[Link Preview] No image found for ${validated.url}`);
+          }
+
+          if (!previewImageUrl) {
+            previewImageUrl = await getFallbackPreviewImage();
+            console.log(`[Link Preview] Using fallback image: ${previewImageUrl}`);
           }
 
           await db.link.update({
@@ -152,6 +174,18 @@ export async function POST(req: Request) {
           console.log(`[Link Preview] Updated link ${link.id} with preview data`);
         } catch (error) {
           console.error("[Link Preview] Failed to fetch and store preview data:", error);
+          try {
+            const fallback = await getFallbackPreviewImage();
+            if (fallback) {
+              await db.link.update({
+                where: { id: link.id },
+                data: { previewImageUrl: fallback },
+              });
+              console.log(`[Link Preview] Updated link ${link.id} with fallback image`);
+            }
+          } catch (fallbackError) {
+            console.error("[Link Preview] Failed to set fallback image:", fallbackError);
+          }
         }
       })();
     }

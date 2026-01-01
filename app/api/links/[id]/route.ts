@@ -4,7 +4,7 @@ import { linkService } from "@/lib/services/link.service";
 import { linkUpdateSchema } from "@/lib/validations/schemas";
 import { db } from "@/lib/db";
 import urlMetadata from "url-metadata";
-import { fetchAndUploadLinkPreviewImage, deleteLinkPreviewImage } from "@/lib/utils/link-preview-image";
+import { fetchAndUploadLinkPreviewImage, deleteLinkPreviewImage, getFallbackPreviewImage } from "@/lib/utils/link-preview-image";
 
 export async function PATCH(
   req: Request,
@@ -46,21 +46,37 @@ export async function PATCH(
 
         const imageUrl = metadata["og:image"] || metadata.image;
         if (imageUrl && typeof imageUrl === "string") {
-          const newPreviewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, link.id);
+          const newPreviewImageUrl = await fetchAndUploadLinkPreviewImage(imageUrl, link.id, data.url);
           if (newPreviewImageUrl) {
             data.previewImageUrl = newPreviewImageUrl;
             
             if (oldPreviewImageUrl) {
               await deleteLinkPreviewImage(oldPreviewImageUrl);
             }
+          } else {
+            const fallback = await getFallbackPreviewImage();
+            data.previewImageUrl = fallback;
+            if (oldPreviewImageUrl) {
+              await deleteLinkPreviewImage(oldPreviewImageUrl);
+            }
           }
-        } else if (oldPreviewImageUrl) {
-          await deleteLinkPreviewImage(oldPreviewImageUrl);
-          data.previewImageUrl = null;
-          data.previewDescription = null;
+        } else {
+          const fallback = await getFallbackPreviewImage();
+          data.previewImageUrl = fallback;
+          if (oldPreviewImageUrl) {
+            await deleteLinkPreviewImage(oldPreviewImageUrl);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch and store preview data:", error);
+        try {
+          const fallback = await getFallbackPreviewImage();
+          if (fallback) {
+            data.previewImageUrl = fallback;
+          }
+        } catch (fallbackError) {
+          console.error("Failed to set fallback image:", fallbackError);
+        }
       }
     }
 

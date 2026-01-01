@@ -113,6 +113,7 @@ export function LinkDialog({
     }
 
     setIsLoadingPreview(true);
+    setManualPreviewLoading(true);
     try {
       const response = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
       if (response.ok) {
@@ -122,14 +123,24 @@ export function LinkDialog({
           setFormTitle(data.title);
         }
       } else {
+        const errorData = await response.json().catch(() => ({ error: "Failed to fetch preview" }));
         setPreview(null);
+        // Don't show error if user can still manually enter title
+        if (!isIconLink) {
+          setUrlError(errorData.error || "Preview unavailable. You can still add the link with a manual title.");
+        }
       }
     } catch {
       setPreview(null);
+      // Don't show error if user can still manually enter title
+      if (!isIconLink) {
+        setUrlError("Preview unavailable. You can still add the link with a manual title.");
+      }
     } finally {
       setIsLoadingPreview(false);
+      setManualPreviewLoading(false);
     }
-  }, [formTitle, initialData]);
+  }, [formTitle, initialData, isIconLink]);
 
   useEffect(() => {
     if (open) {
@@ -174,7 +185,7 @@ export function LinkDialog({
       setIsValidUrl(false);
       setPreview(null);
     }
-  }, [formUrl, open]);
+  }, [formUrl, open, initialData]);
 
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -185,10 +196,10 @@ export function LinkDialog({
     setTitleError("");
     setUrlError("");
 
-    // Require preview for non-icon links
-    if (!isIconLink && !preview) {
-      setUrlError("Please click 'Preview' to fetch link information before adding");
-      toastError("Preview required", "Please click 'Preview' to fetch link information before adding");
+    // For non-icon links, require either preview OR a manually entered title
+    if (!isIconLink && !preview && !formTitle.trim()) {
+      setUrlError("Please enter a title or click 'Preview' to fetch link information");
+      toastError("Title required", "Please enter a title or click 'Preview' to fetch link information");
       return;
     }
 
