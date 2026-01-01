@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 
 const urlSchema = z.object({
   url: z.string().url("Invalid URL format").max(2048, "URL too long"),
@@ -15,12 +15,12 @@ export const validatePreviewRequest = (
     req.validatedQuery = validated;
     next();
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return res.status(400).json({
         error: "Validation failed",
-        details: error.errors.map((e) => ({
-          field: e.path.join("."),
-          message: e.message,
+        details: error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
         })),
       });
     }
@@ -28,11 +28,9 @@ export const validatePreviewRequest = (
   }
 };
 
-declare global {
-  namespace Express {
-    interface Request {
-      validatedQuery?: z.infer<typeof urlSchema>;
-    }
+declare module "express-serve-static-core" {
+  interface Request {
+    validatedQuery?: z.infer<typeof urlSchema>;
   }
 }
 
