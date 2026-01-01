@@ -3,6 +3,7 @@ import { requireAuth } from "@/lib/auth-guard";
 import { profileService } from "@/lib/services/profile.service";
 import { db } from "@/lib/db";
 import { getAvatarUrl } from "@/lib/utils";
+import { deleteAvatarImage } from "@/lib/utils/link-preview-image";
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +15,23 @@ export async function POST(req: Request) {
         { error: "Avatar URL is required" },
         { status: 400 }
       );
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const oldAvatarUrl = user.avatarUrl;
+    
+    if (oldAvatarUrl && oldAvatarUrl !== avatarUrl) {
+      await deleteAvatarImage(oldAvatarUrl);
     }
 
     await profileService.updateUserFields(session.user.id, { avatarUrl });
@@ -30,7 +48,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await requireAuth();
     const user = await db.user.findUnique({

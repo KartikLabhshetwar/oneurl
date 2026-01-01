@@ -84,6 +84,15 @@ export async function DELETE() {
   try {
     const session = await requireAuth();
     const { db } = await import("@/lib/db");
+    const { deleteAvatarImage } = await import("@/lib/utils/link-preview-image");
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (user?.avatarUrl) {
+      await deleteAvatarImage(user.avatarUrl);
+    }
 
     await db.user.delete({
       where: { id: session.user.id },

@@ -223,11 +223,11 @@ export default async function PublicProfilePage({ params }: Props) {
         )}
       </main>
 
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
         <Link href="/signup">
           <Button
             variant="secondary"
-            className="rounded-full px-8 h-12 font-medium shadow-sm hover:shadow transition-all bg-secondary/50 hover:bg-secondary/80 border-transparent"
+            className="rounded-full px-4 py-2 h-9 sm:px-8 sm:h-12 text-xs sm:text-sm font-medium shadow-sm hover:shadow transition-all bg-secondary/50 hover:bg-secondary/80 border-transparent"
           >
             Join {username || "OneURL"} on OneURL
           </Button>

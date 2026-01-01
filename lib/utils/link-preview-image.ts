@@ -96,3 +96,23 @@ export async function deleteLinkPreviewImage(imageUrl: string): Promise<void> {
   }
 }
 
+export async function deleteAvatarImage(imageUrl: string): Promise<void> {
+  try {
+    if (!imageUrl || (!imageUrl.includes("uploadthing.com") && !imageUrl.includes("ufs.sh") && !imageUrl.includes("utfs.io"))) {
+      return;
+    }
+
+    const urlParts = imageUrl.split("/");
+    const fileKey = urlParts[urlParts.length - 1];
+
+    if (!fileKey) {
+      return;
+    }
+
+    const utapi = new UTApi();
+    await utapi.deleteFiles([fileKey]);
+  } catch (error) {
+    console.error("Failed to delete avatar image:", error);
+  }
+}
+

@@ -192,7 +192,7 @@ export function SortableDashboardIconLink({
       <div
         ref={setNodeRef}
         style={style}
-        className={`relative group ${isDeleting || isToggling ? "opacity-60" : ""} ${isDragging ? "z-50" : ""}`}
+        className={`relative group shrink-0 ${isDeleting || isToggling ? "opacity-60" : ""} ${isDragging ? "z-50" : ""}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

@@ -146,6 +146,23 @@ export function ProfilePreview({
           </>
         )}
 
+        {iconLinks.length > 0 && regularLinks.length === 0 && (
+          <>
+            <hr className="h-px bg-transparent border-t-2 border-dashed border-zinc-200 my-4" />
+            <div className="py-8 flex-1 flex items-center justify-center">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Link2 className="h-10 w-10 text-muted-foreground/50" />
+                  </EmptyMedia>
+                  <EmptyTitle>No links yet</EmptyTitle>
+                  <EmptyDescription>Check back later for updates.</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </div>
+          </>
+        )}
+
         {regularLinks.length === 0 && iconLinks.length === 0 && activeLinks.length === 0 && (
           <div className="py-8 flex-1 flex items-center justify-center">
             <Empty>

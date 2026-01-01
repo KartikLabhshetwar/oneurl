@@ -84,6 +84,22 @@ export function LinkDialog({
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [manualPreviewLoading, setManualPreviewLoading] = useState(false);
 
+  const validateUrl = (url: string): boolean => {
+    if (!url || url.trim() === "") {
+      setIsValidUrl(false);
+      return false;
+    }
+
+    try {
+      new URL(url.startsWith("http") ? url : `https://${url}`);
+      setIsValidUrl(true);
+      return true;
+    } catch {
+      setIsValidUrl(false);
+      return false;
+    }
+  };
+
   const fetchPreview = useCallback(async (url: string) => {
     if (!url || url.trim() === "") {
       setPreview(null);
@@ -91,11 +107,7 @@ export function LinkDialog({
       return;
     }
 
-    try {
-      new URL(url.startsWith("http") ? url : `https://${url}`);
-      setIsValidUrl(true);
-    } catch {
-      setIsValidUrl(false);
+    if (!validateUrl(url)) {
       setPreview(null);
       return;
     }
@@ -152,20 +164,17 @@ export function LinkDialog({
     }
   };
 
+  // Only validate URL format on change, don't fetch preview automatically
   useEffect(() => {
-    if (!open || initialData) return;
-
-    const timeoutId = setTimeout(() => {
-      if (formUrl.trim()) {
-        fetchPreview(formUrl);
-      } else {
-        setPreview(null);
-        setIsValidUrl(false);
-      }
-    }, 800);
-
-    return () => clearTimeout(timeoutId);
-  }, [formUrl, open, initialData, fetchPreview]);
+    if (!open) return;
+    
+    if (formUrl.trim()) {
+      validateUrl(formUrl);
+    } else {
+      setIsValidUrl(false);
+      setPreview(null);
+    }
+  }, [formUrl, open]);
 
   const handleOpenChange = (newOpen: boolean) => {
     onOpenChange(newOpen);
@@ -176,10 +185,17 @@ export function LinkDialog({
     setTitleError("");
     setUrlError("");
 
+    // Require preview for non-icon links
+    if (!isIconLink && !preview) {
+      setUrlError("Please click 'Preview' to fetch link information before adding");
+      toastError("Preview required", "Please click 'Preview' to fetch link information before adding");
+      return;
+    }
+
     try {
-      // Auto-generate title for icon links if not provided
-      let titleToUse = formTitle;
-      if (isIconLink && !titleToUse.trim()) {
+      // Auto-generate title if not provided (for both icon and non-icon links)
+      let titleToUse = formTitle.trim();
+      if (!titleToUse) {
         if (preview?.title) {
           titleToUse = preview.title;
         } else {
@@ -187,7 +203,8 @@ export function LinkDialog({
           try {
             const urlObj = new URL(formUrl.startsWith("http") ? formUrl : `https://${formUrl}`);
             const domain = urlObj.hostname.replace("www.", "");
-            titleToUse = domain.split(".")[0].charAt(0).toUpperCase() + domain.split(".")[0].slice(1);
+            const domainParts = domain.split(".");
+            titleToUse = domainParts[0].charAt(0).toUpperCase() + domainParts[0].slice(1);
           } catch {
             titleToUse = "Link";
           }
@@ -300,6 +317,8 @@ export function LinkDialog({
                           onChange={(e) => {
                             setFormUrl(e.target.value);
                             setUrlError("");
+                            // Clear preview when URL changes
+                            setPreview(null);
                           }}
                           placeholder="https://example.com"
                           aria-invalid={urlError ? "true" : undefined}

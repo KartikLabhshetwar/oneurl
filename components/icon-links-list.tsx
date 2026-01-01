@@ -31,14 +31,15 @@ export function IconLinksList({ links, className = "", onLinkClick, renderLink }
         }}
         aria-hidden="true"
       />
-      <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide px-1 relative z-2 py-1 [scrollbar-width:none] [-ms-overflow-style:none]">
+      <div className="flex items-center gap-4 overflow-x-auto scrollbar-thin px-1 relative z-2 py-1 flex-nowrap">
         {links.map((link) => {
           const linkComponent = (
-            <IconLink
-              key={link.id}
-              link={link}
-              onClick={() => onLinkClick?.(link)}
-            />
+            <div key={link.id} className="shrink-0">
+              <IconLink
+                link={link}
+                onClick={() => onLinkClick?.(link)}
+              />
+            </div>
           );
 
           return renderLink ? renderLink(link, linkComponent) : linkComponent;
