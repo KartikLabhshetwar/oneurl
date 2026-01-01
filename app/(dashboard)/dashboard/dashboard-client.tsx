@@ -301,13 +301,15 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
               </div>
             )}
           </div>
-          <div className="bg-gradient-to-b from-background to-muted/20 p-4 rounded-lg">
+          <div className="bg-gradient-to-b from-background to-muted/20 p-4 rounded-lg overflow-auto max-h-[calc(100vh-200px)]">
             <ProfilePreview
               name={displayProfile.name}
               username={displayProfile.username}
               bio={displayProfile.bio}
               avatarUrl={displayProfile.avatarUrl}
+              title={profile?.profile?.title || null}
               links={links}
+              calLink={profile?.profile?.calLink || null}
             />
           </div>
         </div>

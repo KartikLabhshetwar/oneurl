@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const session = await requireAuth();
-    const { name, bio, username } = await req.json();
+    const { name, bio, username, calLink } = await req.json();
 
     if (username) {
       await profileService.updateUsername(session.user.id, username);
@@ -42,6 +42,10 @@ export async function PATCH(req: Request) {
         where: { id: session.user.id },
         data: { name },
       });
+    }
+
+    if (calLink !== undefined) {
+      await profileService.updateProfile(session.user.id, { calLink });
     }
 
     return NextResponse.json({ success: true });

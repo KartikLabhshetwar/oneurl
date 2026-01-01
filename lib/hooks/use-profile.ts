@@ -8,6 +8,10 @@ export type Profile = {
   bio: string;
   username: string;
   avatarUrl: string | null;
+  profile?: {
+    title?: string | null;
+    calLink?: string | null;
+  } | null;
 };
 
 export function useProfile() {
@@ -28,7 +32,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name?: string; bio?: string; username?: string }) => {
+    mutationFn: async (data: { name?: string; bio?: string; username?: string; calLink?: string | null }) => {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

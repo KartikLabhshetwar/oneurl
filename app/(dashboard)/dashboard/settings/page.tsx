@@ -14,6 +14,7 @@ export default async function SettingsPage() {
         bio: profile?.bio || "",
         username: profile?.username || "",
         avatarUrl: getAvatarUrl(profile || { image: null, avatarUrl: null }),
+        calLink: profile?.profile?.calLink || "",
       }}
     />
   );

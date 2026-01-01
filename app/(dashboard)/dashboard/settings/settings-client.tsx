@@ -27,12 +27,13 @@ import { useUploadThing } from "@/lib/uploadthing-client";
 export default function SettingsClient({
   initialProfile,
 }: {
-  initialProfile: { name: string; bio: string; username: string; avatarUrl: string | null };
+  initialProfile: { name: string; bio: string; username: string; avatarUrl: string | null; calLink: string };
 }) {
   const [name, setName] = useState(initialProfile.name);
   const [bio, setBio] = useState(initialProfile.bio);
   const [username, setUsername] = useState(initialProfile.username);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialProfile.avatarUrl);
+  const [calLink, setCalLink] = useState(initialProfile.calLink);
   const [isUploading, setIsUploading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -85,7 +86,7 @@ export default function SettingsClient({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateProfile.mutateAsync({ name, bio, username });
+    await updateProfile.mutateAsync({ name, bio, username, calLink: calLink.trim() || null });
   };
 
   const handleDeleteAccount = async () => {
@@ -219,6 +220,24 @@ export default function SettingsClient({
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         rows={4}
+                        disabled={updateProfile.isPending}
+                      />
+                    )}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="calLink">Cal.com Link</FieldLabel>
+                  <FieldDescription>
+                    Add your Cal.com username or full URL to enable booking on your profile (optional)
+                  </FieldDescription>
+                  <FieldControl
+                    render={(props) => (
+                      <Input
+                        {...props}
+                        id="calLink"
+                        value={calLink}
+                        onChange={(e) => setCalLink(e.target.value)}
+                        placeholder="username or https://cal.com/username"
                         disabled={updateProfile.isPending}
                       />
                     )}

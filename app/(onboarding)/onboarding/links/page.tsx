@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LinkForm, type Link } from "@/components/link-form";
+import { Input } from "@/components/ui/input";
+import { Field, FieldLabel, FieldDescription, FieldControl } from "@/components/ui/field";
 import { toastSuccess, toastError } from "@/lib/toast";
 
 export default function LinksPage() {
   const router = useRouter();
   const [links, setLinks] = useState<Link[]>([]);
+  const [calLink, setCalLink] = useState("");
   const [globalError, setGlobalError] = useState("");
 
   const handleAddLink = (link: Link) => {
@@ -43,15 +46,24 @@ export default function LinksPage() {
         body: JSON.stringify({ links }),
       });
 
-      if (res.ok) {
-        toastSuccess("Links saved", "Your links have been saved successfully");
-        router.push("/onboarding/preview");
-      } else {
+      if (!res.ok) {
         const data = await res.json();
         const errorMessage = data.error || "Failed to save links";
         setGlobalError(errorMessage);
         toastError("Failed to save links", errorMessage);
+        return;
       }
+
+      if (calLink.trim()) {
+        await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ calLink: calLink.trim() || null }),
+        });
+      }
+
+      toastSuccess("Links saved", "Your links have been saved successfully");
+      router.push("/onboarding/preview");
     } catch {
       const errorMessage = "Failed to save links";
       setGlobalError(errorMessage);
@@ -100,6 +112,28 @@ export default function LinksPage() {
             </div>
           </div>
         )}
+
+        <Card>
+          <CardContent className="pt-6">
+            <Field>
+              <FieldLabel htmlFor="calLink">Cal.com Link (Optional)</FieldLabel>
+              <FieldDescription>
+                Add your Cal.com username or full URL to enable booking on your profile
+              </FieldDescription>
+              <FieldControl
+                render={(props) => (
+                  <Input
+                    {...props}
+                    id="calLink"
+                    value={calLink}
+                    onChange={(e) => setCalLink(e.target.value)}
+                    placeholder="username or https://cal.com/username"
+                  />
+                )}
+              />
+            </Field>
+          </CardContent>
+        </Card>
 
         <div className="flex justify-center">
           <Button

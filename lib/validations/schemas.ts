@@ -26,6 +26,7 @@ export const profileSchema = z.object({
   title: z.string().max(100, "Title must be at most 100 characters").optional(),
   bio: z.string().max(500, "Bio must be at most 500 characters").optional(),
   theme: z.string().default("default"),
+  calLink: z.string().max(200, "Cal.com link must be at most 200 characters").optional().nullable(),
 });
 
 export const linkUpdateSchema = linkSchema
