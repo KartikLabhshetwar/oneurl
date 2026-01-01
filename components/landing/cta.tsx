@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 
 export function LandingCTA() {
   return (
-    <section className="border-t-2 border-dashed border-zinc-200">
-      <div className="mx-auto w-full max-w-lg px-4 sm:px-6 lg:px-8 py-24">
+    <section className="border-t-2 border-dashed border-zinc-200 pt-24 md:pt-32 pb-24 md:pb-32">
+      <div className="mx-auto w-full max-w-lg px-4 sm:px-6 lg:px-8">
         <div className="space-y-6 text-center">
-          <h2 className="text-2xl md:text-3xl font-medium">
+          <h2 className="text-3xl md:text-4xl font-medium">
             Ready to share your links?
           </h2>
           <p className="text-sm text-zinc-600 max-w-2xl mx-auto leading-relaxed">
