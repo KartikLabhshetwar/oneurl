@@ -4,12 +4,21 @@ import { ourFileRouter } from "../config/uploadthing";
 
 const router = Router();
 
-router.use(
-  "/",
-  createRouteHandler({
+try {
+  const uploadthingHandler = createRouteHandler({
     router: ourFileRouter,
-  })
-);
+  });
+  
+  router.use("/", uploadthingHandler);
+} catch (error) {
+  console.error("[UploadThing] Failed to initialize route handler:", error);
+  router.use("/", (req, res) => {
+    res.status(500).json({
+      error: "File upload service unavailable",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  });
+}
 
 export default router;
 

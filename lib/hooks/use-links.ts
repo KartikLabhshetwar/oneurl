@@ -34,14 +34,16 @@ export function useCreateLink() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { title: string; url: string; icon?: string | null }) => {
+    mutationFn: async (data: { title: string; url: string; icon?: string | null; previewImageUrl?: string | null; previewDescription?: string | null }) => {
       const validated = linkSchema.parse(data);
       const res = await fetchFromBackend("/api/links", {
         method: "POST",
         body: JSON.stringify({ 
           title: validated.title, 
           url: validated.url,
-          icon: validated.icon || null
+          icon: validated.icon || null,
+          previewImageUrl: data.previewImageUrl || null,
+          previewDescription: data.previewDescription || null,
         }),
       });
 
@@ -66,6 +68,8 @@ export function useCreateLink() {
             title: newLink.title,
             url: newLink.url,
             icon: newLink.icon || null,
+            previewImageUrl: newLink.previewImageUrl || null,
+            previewDescription: newLink.previewDescription || null,
             position: old.length,
             isActive: true,
           },

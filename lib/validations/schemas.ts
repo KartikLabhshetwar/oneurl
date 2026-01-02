@@ -12,7 +12,7 @@ export const linkSchema = z.object({
   title: z
     .string()
     .min(1, "Title is required")
-    .max(50, "Title must be at most 50 characters")
+    .max(800, "Title must be at most 800 characters")
     .transform((val) => sanitizeTitle(val)),
   url: z
     .string()
@@ -20,6 +20,8 @@ export const linkSchema = z.object({
     .transform((val) => sanitizeUrl(val))
     .refine((val) => val.length > 0, "Invalid URL format"),
   icon: z.string().optional().nullable(),
+  previewImageUrl: z.url().max(2048).optional().nullable(),
+  previewDescription: z.string().max(500).optional().nullable(),
 });
 
 export const profileSchema = z.object({

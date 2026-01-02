@@ -4,7 +4,7 @@ import { PreviewWrapper } from "./preview-wrapper";
 import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function PreviewPage() {
-  const session = await requireAuth();
+  await requireAuth();
   
   let profileData = null;
   try {

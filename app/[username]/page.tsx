@@ -9,13 +9,21 @@ import {
   EmptyDescription,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { getAvatarUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ProfileHeaderButtons } from "./profile-header-buttons";
 import { CalBookingButton } from "@/components/cal-booking-button";
 import { TrackedIconLinksList } from "@/components/tracked-icon-links-list";
 import { TrackedMainLinksList } from "@/components/tracked-main-links-list";
+
+interface ProfileLink {
+  id: string;
+  title: string;
+  url: string;
+  icon: string | null;
+  isActive: boolean;
+  position: number;
+}
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -28,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Profile Not Found" };
   }
   
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:3001";
+  const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
   
   let user = null;
   try {
@@ -42,7 +50,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     console.error("Failed to fetch profile for metadata:", error);
   }
 
-  if (!user || !user.profile?.isPublished) {
+  if (!user) {
+    return {
+      title: "Profile Not Found",
+    };
+  }
+
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  const isPublished = user.profile?.isPublished === true;
+
+  if (!isPublished && !isDevelopment) {
     return {
       title: "Profile Not Found",
     };
@@ -136,7 +153,7 @@ export default async function PublicProfilePage({ params }: Props) {
     notFound();
   }
   
-  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:3001";
+  const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
   
   let user = null;
   try {
@@ -150,13 +167,20 @@ export default async function PublicProfilePage({ params }: Props) {
     console.error("Failed to fetch profile:", error);
   }
 
-  if (!user || !user.profile?.isPublished) {
+  if (!user) {
     notFound();
   }
 
-  const links = (user.profile?.links || []).filter((link: any) => link.isActive);
-  const iconLinks = links.filter((link: any) => link.icon);
-  const regularLinks = links.filter((link: any) => !link.icon);
+  const isDevelopment = process.env.NODE_ENV !== "production";
+  const isPublished = user.profile?.isPublished === true;
+
+  if (!isPublished && !isDevelopment) {
+    notFound();
+  }
+
+  const links = (user.profile?.links || []).filter((link: ProfileLink) => link.isActive);
+  const iconLinks = links.filter((link: ProfileLink) => link.icon);
+  const regularLinks = links.filter((link: ProfileLink) => !link.icon);
 
   const avatarUrl = user.avatarUrl || user.image || null;
 

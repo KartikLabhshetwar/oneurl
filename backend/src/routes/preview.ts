@@ -5,7 +5,8 @@ const router = Router();
 
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const url = req.validatedQuery?.url;
+    const validated = req.validatedQuery as { url: string } | undefined;
+    const url = validated?.url;
     
     if (!url) {
       return res.status(400).json({ error: "URL parameter is required" });
@@ -46,4 +47,3 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 export default router;
-

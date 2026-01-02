@@ -1,10 +1,9 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { getAvatarUrl } from "@/lib/utils";
 import SettingsClient from "./settings-client";
 import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function SettingsPage() {
-  const session = await requireAuth();
+  await requireAuth();
   
   let profileData = null;
   try {
@@ -28,4 +27,3 @@ export default async function SettingsPage() {
     />
   );
 }
-

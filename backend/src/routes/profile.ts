@@ -1,15 +1,22 @@
-import { Router } from "express";
+import { Router, Response } from "express";
 import { requireAuth } from "../middleware/auth";
+import { validateBody, validateParams } from "../middleware/validator";
 import { profileService } from "../services/profile.service";
 import { db } from "../config/db";
-import { z } from "zod";
+import {
+  profileUpdateSchema,
+  avatarSchema,
+  usernameBodySchema,
+  usernameParamSchema,
+} from "../utils/validations";
+import { AuthenticatedRequest } from "../types/express";
 
 const router = Router();
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, async (req, res: Response) => {
   try {
-    const session = (req as any).session;
-    const userId = (req.query.userId as string) || session.user.id;
+    const authReq = req as AuthenticatedRequest;
+    const userId = (req.query.userId as string) || authReq.session!.user.id;
 
     const user = await profileService.getByUserId(userId);
 
@@ -17,7 +24,7 @@ router.get("/", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const response = {
+    res.json({
       name: user.name,
       bio: user.bio,
       username: user.username,
@@ -26,37 +33,35 @@ router.get("/", requireAuth, async (req, res) => {
         title: user.profile.title,
         calLink: user.profile.calLink,
       } : null,
-    };
-
-    res.json(response);
+    });
   } catch (error) {
     console.error("Error fetching profile:", error);
     res.status(500).json({ error: "Failed to fetch profile" });
   }
 });
 
-router.patch("/", requireAuth, async (req, res) => {
+router.patch("/", requireAuth, validateBody(profileUpdateSchema), async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
     const { name, bio, username, calLink } = req.body;
 
     if (username) {
-      await profileService.updateUsername(session.user.id, username);
+      await profileService.updateUsername(authReq.session!.user.id, username);
     }
 
     if (bio !== undefined) {
-      await profileService.updateUserFields(session.user.id, { bio });
+      await profileService.updateUserFields(authReq.session!.user.id, { bio });
     }
 
     if (name) {
       await db.user.update({
-        where: { id: session.user.id },
+        where: { id: authReq.session!.user.id },
         data: { name },
       });
     }
 
     if (calLink !== undefined) {
-      await profileService.updateProfile(session.user.id, { 
+      await profileService.updateProfile(authReq.session!.user.id, { 
         calLink,
         theme: "default"
       });
@@ -69,13 +74,13 @@ router.patch("/", requireAuth, async (req, res) => {
   }
 });
 
-router.delete("/", requireAuth, async (req, res) => {
+router.delete("/", requireAuth, async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
     const { UTApi } = await import("uploadthing/server");
 
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authReq.session!.user.id },
     });
 
     if (user?.avatarUrl) {
@@ -92,7 +97,7 @@ router.delete("/", requireAuth, async (req, res) => {
     }
 
     await db.user.delete({
-      where: { id: session.user.id },
+      where: { id: authReq.session!.user.id },
     });
 
     res.json({ success: true });
@@ -102,17 +107,13 @@ router.delete("/", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/avatar", requireAuth, async (req, res) => {
+router.post("/avatar", requireAuth, validateBody(avatarSchema), async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
     const { avatarUrl } = req.body;
 
-    if (!avatarUrl) {
-      return res.status(400).json({ error: "Avatar URL is required" });
-    }
-
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authReq.session!.user.id },
     });
 
     if (!user) {
@@ -135,7 +136,7 @@ router.post("/avatar", requireAuth, async (req, res) => {
       }
     }
 
-    await profileService.updateUserFields(session.user.id, { avatarUrl });
+    await profileService.updateUserFields(authReq.session!.user.id, { avatarUrl });
     res.json({ success: true });
   } catch (error) {
     console.error("Error updating avatar:", error);
@@ -143,16 +144,12 @@ router.post("/avatar", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/username", requireAuth, async (req, res) => {
+router.post("/username", requireAuth, validateBody(usernameBodySchema), async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
     const { username } = req.body;
 
-    if (!username) {
-      return res.status(400).json({ error: "Username is required" });
-    }
-
-    await profileService.updateUsername(session.user.id, username);
+    await profileService.updateUsername(authReq.session!.user.id, username);
     res.json({ success: true });
   } catch (error) {
     console.error("Error updating username:", error);
@@ -160,15 +157,11 @@ router.post("/username", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/check-username", async (req, res) => {
+router.post("/check-username", validateBody(usernameBodySchema), async (req, res: Response) => {
   try {
     const { auth } = await import("../config/auth");
-    const session = await auth.api.getSession({ headers: req.headers as HeadersInit });
+    const session = await auth.api.getSession({ headers: req.headers as unknown as Headers });
     const { username } = req.body;
-
-    if (!username) {
-      return res.status(400).json({ error: "Username is required" });
-    }
 
     const available = await profileService.checkUsernameAvailable(
       username,
@@ -182,12 +175,12 @@ router.post("/check-username", async (req, res) => {
   }
 });
 
-router.post("/publish", requireAuth, async (req, res) => {
+router.post("/publish", requireAuth, async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
 
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authReq.session!.user.id },
       include: { profile: { include: { links: true } } },
     });
 
@@ -199,9 +192,9 @@ router.post("/publish", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Please add at least one link" });
     }
 
-    await profileService.publishProfile(session.user.id);
+    await profileService.publishProfile(authReq.session!.user.id);
     await db.user.update({
-      where: { id: session.user.id },
+      where: { id: authReq.session!.user.id },
       data: { isOnboarded: true },
     });
 
@@ -212,12 +205,19 @@ router.post("/publish", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/username/:username", async (req, res) => {
+router.get("/username/:username", validateParams(usernameParamSchema), async (req, res: Response) => {
   try {
     const { username } = req.params;
     const user = await profileService.getByUsername(username);
 
-    if (!user || !user.profile?.isPublished) {
+    if (!user) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const isDevelopment = process.env.NODE_ENV !== "production";
+    const isPublished = user.profile?.isPublished === true;
+
+    if (!isPublished && !isDevelopment) {
       return res.status(404).json({ error: "Profile not found" });
     }
 
@@ -228,9 +228,10 @@ router.get("/username/:username", async (req, res) => {
       bio: user.bio,
       avatarUrl: user.avatarUrl || user.image || null,
       profile: {
-        title: user.profile.title,
-        calLink: user.profile.calLink,
-        links: user.profile.links,
+        title: user.profile?.title || null,
+        calLink: user.profile?.calLink || null,
+        links: user.profile?.links || [],
+        isPublished: isPublished,
       },
     });
   } catch (error) {
@@ -240,4 +241,3 @@ router.get("/username/:username", async (req, res) => {
 });
 
 export default router;
-

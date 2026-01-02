@@ -143,11 +143,11 @@ export function AnalyticsClient({
       return res.json();
     },
     initialData: selectedLinkId ? undefined : initialStats,
-    refetchInterval: 10000,
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 60000,
+    staleTime: 30000,
+    gcTime: 120000,
   });
 
   const handleRefresh = async () => {

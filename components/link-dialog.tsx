@@ -24,7 +24,7 @@ import Image from "next/image";
 interface LinkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { title: string; url: string; icon?: string | null }) => Promise<void>;
+  onSubmit: (data: { title: string; url: string; icon?: string | null; previewImageUrl?: string | null; previewDescription?: string | null }) => Promise<void>;
   isPending?: boolean;
   initialData?: Link | null;
   title: string;
@@ -230,7 +230,9 @@ export function LinkDialog({
       await onSubmit({ 
         title: validated.title, 
         url: validated.url,
-        icon: validated.icon
+        icon: validated.icon,
+        previewImageUrl: !isIconLink ? (preview?.image || null) : null,
+        previewDescription: !isIconLink ? (preview?.description || null) : null,
       });
       if (!initialData) {
         setFormTitle("");

@@ -1,5 +1,4 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { getAvatarUrl } from "@/lib/utils";
 import { DashboardClient } from "./dashboard-client";
 import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 

@@ -32,8 +32,8 @@ export function PreviewWrapper({
       const data = await res.json();
       return (data.links || []) as Link[];
     },
-    refetchInterval: 2000,
-    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 30000,
   });
 
   const { data: profileData } = useQuery({
@@ -45,8 +45,8 @@ export function PreviewWrapper({
       }
       return res.json();
     },
-    refetchInterval: 2000,
-    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    staleTime: 30000,
   });
 
   const links = linksData || [];

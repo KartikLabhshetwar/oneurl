@@ -1,16 +1,14 @@
 import { Router } from "express";
+import { validateBody } from "../middleware/validator";
 import { trackingService } from "../services/tracking.service";
+import { trackClickSchema } from "../utils/validations";
 import { db } from "../config/db";
 
 const router = Router();
 
-router.post("/", async (req, res) => {
+router.post("/", validateBody(trackClickSchema), async (req, res) => {
   try {
     const { linkId, clientId } = req.body;
-
-    if (!linkId) {
-      return res.status(400).json({ error: "Missing linkId" });
-    }
 
     const link = await db.link.findUnique({
       where: { id: linkId },
@@ -44,8 +42,8 @@ router.post("/", async (req, res) => {
     const url = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
 
     const allHeaders: Record<string, string | null> = {
-      "accept-language": req.get("accept-language"),
-      "accept-encoding": req.get("accept-encoding"),
+      "accept-language": req.get("accept-language") || null,
+      "accept-encoding": req.get("accept-encoding") || null,
     };
 
     const result = await trackingService.trackClickWithRetry({
@@ -84,4 +82,3 @@ router.post("/", async (req, res) => {
 });
 
 export default router;
-

@@ -209,36 +209,77 @@ oneurl/
    - Production: `https://api.oneurl.live/api/auth/callback/google`
 6. Copy Client ID and Client Secret to backend `.env`
 
-## Deployment
+## Self-Hosting with Docker
 
-### Frontend (Vercel)
+The easiest way to self-host OneURL is using Docker. Everything is pre-configured for you.
 
-1. Push code to GitHub
-2. Import repository to Vercel
-3. Add environment variables:
-   - `NEXT_PUBLIC_BACKEND_URL=https://api.oneurl.live`
-4. Deploy
+### Quick Start
 
-### Backend (Railway/Render/Fly.io)
+1. **Clone and set up environment:**
 
-1. Deploy the `backend/` directory
-2. Add all environment variables from backend `.env`
-3. Set `FRONTEND_URL=https://oneurl.live`
-4. Configure DNS: `api.oneurl.live` → backend service
+```bash
+git clone https://github.com/KartikLabhshetwar/oneurl.git
+cd oneurl
 
-### Production Checklist
+# Create .env file in root directory
+cp .env.example .env
+```
 
-**Frontend:**
-- [ ] Set `NEXT_PUBLIC_BACKEND_URL` to production backend URL
+2. **Configure your `.env` file:**
 
-**Backend:**
-- [ ] Set up Neon PostgreSQL database
-- [ ] Configure Google OAuth with production redirect URI
-- [ ] Set `FRONTEND_URL` to `https://oneurl.live`
-- [ ] Set `BACKEND_URL` to `https://api.oneurl.live`
-- [ ] Set `NODE_ENV` to `production`
-- [ ] Verify CORS allows frontend origin
-- [ ] Test health endpoint: `https://api.oneurl.live/health`
+```env
+# Database - Get a free Neon PostgreSQL at https://neon.tech
+DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require
+
+# Authentication
+BETTER_AUTH_SECRET=your-secret-key-minimum-32-characters
+BETTER_AUTH_URL=http://localhost:3001
+
+# URLs (change these for production)
+BACKEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
+
+# Google OAuth - Get credentials at https://console.cloud.google.com
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# UploadThing - Get token at https://uploadthing.com
+UPLOADTHING_TOKEN=your-uploadthing-token
+```
+
+3. **Start with Docker Compose:**
+
+```bash
+# Production mode
+docker-compose up --build
+
+# Development mode with hot reload
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+4. **Access the app:**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:3001
+
+### Docker Production Deployment
+
+For production, update your `.env`:
+
+```env
+BACKEND_URL=https://api.yourdomain.com
+FRONTEND_URL=https://yourdomain.com
+BETTER_AUTH_URL=https://api.yourdomain.com
+```
+
+Then deploy using any Docker-compatible platform:
+- **Docker Swarm**
+- **Kubernetes**
+- **Railway**
+- **Render**
+- **Fly.io**
+- **DigitalOcean App Platform**
+
+---
 
 ## Contributing
 
@@ -252,7 +293,7 @@ Contributions are welcome! Please read our [Contributing Guidelines](./CONTRIBUT
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+This project is licensed under the BSD 3-Clause License - see the [LICENSE](./LICENSE) file for details.
 
 ---
 

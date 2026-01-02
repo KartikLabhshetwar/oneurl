@@ -1,6 +1,6 @@
 "use client";
 
-import { cloneElement, isValidElement, useCallback } from "react";
+import { cloneElement, isValidElement, useCallback, ReactElement } from "react";
 
 const STORAGE_KEY_PREFIX = "oneurl_click_";
 const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -63,7 +63,8 @@ function shouldTrack(): boolean {
     return false;
   }
 
-  if (typeof window !== "undefined" && (window as any).doNotTrack === "1") {
+  const win = window as Window & { doNotTrack?: string };
+  if (typeof window !== "undefined" && win.doNotTrack === "1") {
     return false;
   }
 
@@ -142,11 +143,12 @@ export default function LinkClickTracker({
   }, [linkId]);
 
   if (isValidElement(children)) {
-    return cloneElement(children as any, {
+    const child = children as ReactElement<{ onClick?: (e: React.MouseEvent) => void }>;
+    return cloneElement(child, {
       onClick: (e: React.MouseEvent) => {
         handleClick();
-        if ((children as any).props.onClick) {
-          (children as any).props.onClick(e);
+        if (child.props.onClick) {
+          child.props.onClick(e);
         }
       },
     });

@@ -14,11 +14,11 @@ export function useLinkClickCounts() {
       const data = await res.json();
       return (data.counts || {}) as Record<string, number>;
     },
-    refetchInterval: 5000,
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 30000,
+    staleTime: 30000,
+    gcTime: 120000,
   });
 }
 
@@ -34,11 +34,11 @@ export function useLinkAnalytics(linkId: string | null) {
       return res.json();
     },
     enabled: !!linkId,
-    refetchInterval: 10000,
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 60000,
+    staleTime: 30000,
+    gcTime: 120000,
   });
 }
 
@@ -52,11 +52,11 @@ export function useProfileAnalytics() {
       }
       return res.json();
     },
-    refetchInterval: 10000,
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 60000,
+    staleTime: 30000,
+    gcTime: 120000,
   });
 }
 

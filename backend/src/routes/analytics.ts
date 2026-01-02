@@ -1,15 +1,16 @@
-import { Router } from "express";
+import { Router, Response } from "express";
 import { requireAuth } from "../middleware/auth";
 import { analyticsService } from "../services/analytics.service";
 import { db } from "../config/db";
+import { AuthenticatedRequest } from "../types/express";
 
 const router = Router();
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
     const profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: authReq.session!.user.id },
     });
 
     if (!profile) {
@@ -55,11 +56,11 @@ router.get("/", requireAuth, async (req, res) => {
   }
 });
 
-router.get("/links", requireAuth, async (req, res) => {
+router.get("/links", requireAuth, async (req, res: Response) => {
   try {
-    const session = (req as any).session;
+    const authReq = req as AuthenticatedRequest;
     const profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: authReq.session!.user.id },
     });
 
     if (!profile) {
@@ -82,4 +83,3 @@ router.get("/links", requireAuth, async (req, res) => {
 });
 
 export default router;
-

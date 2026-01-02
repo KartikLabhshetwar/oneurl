@@ -10,9 +10,16 @@ import {
 import { AnalyticsClient } from "./analytics-client";
 import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
+interface LinkData {
+  id: string;
+  title: string;
+  url: string;
+  isActive: boolean;
+}
+
 export default async function AnalyticsPage() {
   let stats = null;
-  let links: Array<{ id: string; title: string; url: string; isActive: boolean }> = [];
+  let links: LinkData[] = [];
   let hasError = false;
 
   try {
@@ -29,7 +36,7 @@ export default async function AnalyticsPage() {
 
     if (linksRes.ok) {
       const linksData = await linksRes.json();
-      links = (linksData.links || []).map((link: any) => ({
+      links = (linksData.links || []).map((link: LinkData) => ({
         id: link.id,
         title: link.title,
         url: link.url,

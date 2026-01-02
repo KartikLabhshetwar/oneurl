@@ -7,7 +7,7 @@ export default function NotFound() {
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold">404</h1>
         <p className="text-muted-foreground">
-          This profile doesn't exist or hasn't been published yet.
+          This profile does not exist or has not been published yet.
         </p>
         <Button render={<Link href="/" />}>
           Go Home

@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
 async function proxyToBackend(req: NextRequest) {
   const url = new URL(req.url);
   const backendUrl = `${BACKEND_URL}/api/uploadthing${url.search}`;
   
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  
   const headers = new Headers(req.headers);
   headers.delete("host");
+  
+  if (cookieHeader) {
+    headers.set("cookie", cookieHeader);
+  }
   
   const response = await fetch(backendUrl, {
     method: req.method,
@@ -33,4 +41,5 @@ export async function POST(req: NextRequest) {
 }
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
