@@ -134,10 +134,11 @@ export function AnalyticsClient({
   const { data: stats = initialStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ["analytics", selectedLinkId],
     queryFn: async () => {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
       const url = selectedLinkId
-        ? `/api/analytics?linkId=${selectedLinkId}`
-        : "/api/analytics";
-      const res = await fetch(url);
+        ? `${BACKEND_URL}/api/analytics?linkId=${selectedLinkId}`
+        : `${BACKEND_URL}/api/analytics`;
+      const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch analytics");
       return res.json();
     },

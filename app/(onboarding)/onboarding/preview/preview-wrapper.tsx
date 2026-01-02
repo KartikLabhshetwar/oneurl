@@ -21,10 +21,11 @@ export function PreviewWrapper({
   initialTitle,
   initialCalLink,
 }: PreviewWrapperProps) {
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
   const { data: linksData } = useQuery({
     queryKey: ["links"],
     queryFn: async () => {
-      const res = await fetch("/api/links");
+      const res = await fetch(`${BACKEND_URL}/api/links`, { credentials: "include" });
       if (!res.ok) {
         throw new Error("Failed to fetch links");
       }
@@ -38,7 +39,7 @@ export function PreviewWrapper({
   const { data: profileData } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
-      const res = await fetch("/api/profile");
+      const res = await fetch(`${BACKEND_URL}/api/profile`, { credentials: "include" });
       if (!res.ok) {
         throw new Error("Failed to fetch profile");
       }

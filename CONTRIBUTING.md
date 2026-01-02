@@ -5,6 +5,7 @@ Thank you for your interest in contributing to OneURL! This document provides gu
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
+- [Architecture Overview](#architecture-overview)
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
 - [Code Style Guidelines](#code-style-guidelines)
@@ -17,14 +18,46 @@ Thank you for your interest in contributing to OneURL! This document provides gu
 
 This project adheres to a [Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to kartik.labhshetwar@gmail.com.
 
+## Architecture Overview
+
+OneURL uses a **split architecture** with a Next.js frontend and Express.js backend:
+
+```
+┌─────────────────────────────────┐      ┌─────────────────────────────────┐
+│      FRONTEND (Next.js)         │      │      BACKEND (Express)          │
+│      localhost:3000             │ ───► │      localhost:3001             │
+└─────────────────────────────────┘      └─────────────────────────────────┘
+                                                        │
+                                                        ▼
+                                         ┌─────────────────────────────────┐
+                                         │      DATABASE (Neon)            │
+                                         │      PostgreSQL Serverless      │
+                                         └─────────────────────────────────┘
+```
+
+**Key Principle:** The frontend NEVER accesses the database directly. All data operations go through the backend API.
+
+### Backend API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/auth/*` | Authentication (Better Auth + Google OAuth) |
+| `/api/profile` | User profile management |
+| `/api/links` | Link CRUD operations |
+| `/api/track` | Click tracking |
+| `/api/analytics` | Analytics data |
+| `/api/preview` | URL metadata fetching |
+| `/api/uploadthing` | File uploads |
+
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 20+ or Bun
-- PostgreSQL database (local or cloud)
+- PostgreSQL database (Neon recommended)
 - Git
-- Basic knowledge of TypeScript, React, and Next.js
+- Google OAuth credentials
+- UploadThing account (optional, for file uploads)
 
 ### Initial Setup
 
@@ -43,26 +76,62 @@ This project adheres to a [Code of Conduct](./CODE_OF_CONDUCT.md). By participat
 
 4. **Install dependencies**:
    ```bash
+   # Frontend
    bun install
-   # or
-   npm install
+
+   # Backend
+   cd backend && bun install && cd ..
    ```
 
 5. **Set up environment variables**:
-   ```bash
-   cp .env.example .env
+
+   **Frontend `.env`** (root directory):
+   ```env
+   NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
    ```
-   Fill in the required environment variables (see [README.md](./README.md) for details)
+
+   **Backend `.env`** (`backend/` directory):
+   ```env
+   # Database
+   DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require
+
+   # Server
+   PORT=3001
+   NODE_ENV=development
+   BACKEND_URL=http://localhost:3001
+   FRONTEND_URL=http://localhost:3000
+
+   # Better Auth
+   BETTER_AUTH_URL=http://localhost:3001
+   BETTER_AUTH_SECRET=your-secret-key-minimum-32-characters
+
+   # Google OAuth
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+   # UploadThing (optional)
+   UPLOADTHING_TOKEN=your-uploadthing-token
+   ```
 
 6. **Set up the database**:
    ```bash
-   bun prisma generate
-   bun prisma migrate dev
+   cd backend
+   bun run prisma:generate
+   bun run prisma:migrate
+   cd ..
    ```
 
-7. **Start the development server**:
+7. **Start the development servers**:
    ```bash
+   # Both services
+   bun run dev:all
+
+   # Or separately:
+   # Terminal 1 - Frontend
    bun run dev
+
+   # Terminal 2 - Backend
+   cd backend && bun run dev
    ```
 
 ## Development Workflow
@@ -75,10 +144,6 @@ Always create a new branch from `main` for your work:
 git checkout main
 git pull upstream main
 git checkout -b feature/your-feature-name
-# or
-git checkout -b fix/your-bug-fix
-# or
-git checkout -b docs/your-documentation-update
 ```
 
 **Branch naming conventions:**
@@ -86,15 +151,13 @@ git checkout -b docs/your-documentation-update
 - `fix/` - Bug fixes
 - `docs/` - Documentation updates
 - `refactor/` - Code refactoring
-- `test/` - Adding or updating tests
 - `chore/` - Maintenance tasks
 
 ### 2. Make Your Changes
 
-- Write clean, maintainable code
+- **Frontend changes**: Work in root directory
+- **Backend changes**: Work in `backend/` directory
 - Follow the code style guidelines below
-- Add comments where necessary
-- Update documentation if needed
 - Test your changes thoroughly
 
 ### 3. Commit Your Changes
@@ -116,16 +179,13 @@ Then create a Pull Request on GitHub.
 - Use TypeScript for all new code
 - Avoid `any` types - use proper types or `unknown`
 - Use interfaces for object shapes, types for unions/intersections
-- Prefer `const` over `let`, avoid `var`
 
-### React Components
+### React Components (Frontend)
 
 - Use functional components with hooks
-- Keep components small and focused (single responsibility)
+- Keep components small and focused
 - Extract reusable logic into custom hooks
-- Use meaningful component and prop names
 
-**Example:**
 ```tsx
 // Good
 export function UserProfile({ userId }: { userId: string }) {
@@ -134,31 +194,38 @@ export function UserProfile({ userId }: { userId: string }) {
   if (isLoading) return <Spinner />;
   return <div>{data.name}</div>;
 }
-
-// Avoid
-export function Component({ id }: { id: string }) {
-  // ...
-}
 ```
 
-### File Organization
+### Backend Services
 
-- One component per file
-- Use PascalCase for component files: `UserProfile.tsx`
-- Use camelCase for utility files: `formatDate.ts`
-- Group related files in folders
+- Keep business logic in `backend/src/services/`
+- Routes should be thin - just handle HTTP and call services
+- Always validate input with Zod
 
-### Imports
+```typescript
+// Good - in routes/profile.ts
+router.get("/", requireAuth, async (req, res) => {
+  const session = (req as any).session;
+  const user = await profileService.getByUserId(session.user.id);
+  res.json(user);
+});
+```
 
-- Group imports: external packages, then internal modules
-- Use absolute imports with `@/` alias
-- Remove unused imports
+### API Calls from Frontend
 
-```tsx
-// Good
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useProfile } from "@/lib/hooks/use-profile";
+- **Never** import database or Prisma in frontend code
+- Use `fetchFromBackendServer` for server components
+- Use `authClient` or fetch for client components
+
+```typescript
+// Good - server component
+import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
+
+const res = await fetchFromBackendServer("/api/profile");
+const profile = await res.json();
+
+// Good - client component
+const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/profile`);
 ```
 
 ### Naming Conventions
@@ -166,49 +233,18 @@ import { useProfile } from "@/lib/hooks/use-profile";
 - **Components**: PascalCase (`UserProfile`)
 - **Functions/Variables**: camelCase (`getUserData`)
 - **Constants**: UPPER_SNAKE_CASE (`MAX_FILE_SIZE`)
-- **Types/Interfaces**: PascalCase (`UserProfile`, `ApiResponse`)
+- **Types/Interfaces**: PascalCase (`UserProfile`)
 
 ### Code Comments
 
 - Don't add unnecessary comments
 - Comment complex logic or business rules
-- Use JSDoc for public APIs
 
-```tsx
-// Good - explains why, not what
+```typescript
+// Good - explains why
 // Skip validation for admin users to allow bulk operations
 if (user.role === "admin") return;
-
-// Avoid - obvious from code
-// Set the name to the user's name
-setName(user.name);
 ```
-
-### Error Handling
-
-- Always handle errors appropriately
-- Provide meaningful error messages
-- Use try-catch for async operations
-- Validate user input
-
-```tsx
-// Good
-try {
-  const result = await apiCall();
-  return result;
-} catch (error) {
-  console.error("Failed to fetch data:", error);
-  toastError("Failed to load data");
-  throw error;
-}
-```
-
-### Database Queries
-
-- Use Prisma for all database operations
-- Keep queries in service files (`lib/services/`)
-- Handle database errors gracefully
-- Use transactions for multi-step operations
 
 ## Commit Guidelines
 
@@ -218,8 +254,6 @@ try {
 <type>(<scope>): <subject>
 
 <body>
-
-<footer>
 ```
 
 ### Types
@@ -227,38 +261,35 @@ try {
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
 - `refactor`: Code refactoring
-- `test`: Adding or updating tests
 - `chore`: Maintenance tasks
+
+### Scope
+
+- `frontend`: Frontend changes
+- `backend`: Backend changes
+- `auth`: Authentication
+- `db`: Database changes
+- `api`: API changes
 
 ### Examples
 
 ```
-feat(settings): add avatar upload functionality
+feat(backend): add click tracking endpoint
 
-- Implement file upload with react-dropzone
-- Add uploadthing integration
-- Update avatar display in sidebar
-
-Closes #123
+- Add /api/track endpoint
+- Implement tracking service
+- Store click analytics in database
 ```
 
 ```
-fix(auth): handle expired session tokens
+fix(frontend): handle expired session redirect
 
-Previously, expired tokens caused app crashes.
+Previously, expired sessions caused app crashes.
 Now properly redirects to login page.
 
 Fixes #456
 ```
-
-### Commit Best Practices
-
-- Write clear, descriptive commit messages
-- Keep commits focused (one logical change per commit)
-- Use present tense ("add feature" not "added feature")
-- Reference issues/PRs when applicable
 
 ## Pull Request Process
 
@@ -277,10 +308,7 @@ Fixes #456
    bun run lint
    ```
 
-3. **Test your changes**:
-   - Test manually in the browser
-   - Verify all existing functionality still works
-   - Test edge cases
+3. **Test your changes** manually in the browser
 
 4. **Update documentation** if needed
 
@@ -296,85 +324,98 @@ Brief description of changes
 - [ ] Breaking change
 - [ ] Documentation update
 
+## Affected Areas
+- [ ] Frontend
+- [ ] Backend
+- [ ] Database schema
+- [ ] API endpoints
+
 ## Testing
 How was this tested?
-
-## Screenshots (if applicable)
-Add screenshots here
 
 ## Checklist
 - [ ] Code follows style guidelines
 - [ ] Self-review completed
-- [ ] Comments added for complex code
 - [ ] Documentation updated
 - [ ] No new warnings/errors
-- [ ] Tests pass
 ```
-
-### PR Review Process
-
-1. Maintainers will review your PR
-2. Address any feedback or requested changes
-3. Keep PRs focused and reasonably sized
-4. Respond to comments promptly
-5. Once approved, maintainers will merge
 
 ## Project Structure
 
 ```
 oneurl/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication routes
-│   ├── (dashboard)/      # Protected dashboard routes
-│   ├── (onboarding)/     # Onboarding flow
-│   ├── [username]/       # Public profile pages
-│   └── api/              # API routes
-├── components/            # React components
-│   ├── landing/          # Landing page components
-│   └── ui/               # Reusable UI components
-├── lib/                   # Utilities and services
-│   ├── hooks/            # Custom React hooks
-│   ├── services/         # Business logic
-│   └── validations/      # Zod schemas
-├── prisma/               # Database schema and migrations
-└── public/               # Static assets
+├── app/                        # Next.js App Router (Frontend)
+│   ├── (auth)/                # Auth routes (login, signup)
+│   ├── (dashboard)/           # Protected dashboard routes
+│   ├── (onboarding)/          # Onboarding flow
+│   ├── [username]/            # Public profile pages
+│   └── api/                   # API route proxies (to backend)
+├── components/                 # React components
+│   ├── landing/               # Landing page components
+│   └── ui/                    # Reusable UI components
+├── lib/                        # Frontend utilities
+│   ├── auth.ts                # Server-side auth utilities
+│   ├── auth-client.ts         # Client-side auth
+│   ├── auth-guard.ts          # Route protection
+│   └── utils/
+│       ├── server-api-client.ts  # Server component API calls
+│       └── backend-client.ts     # Client component API calls
+├── backend/                    # Express Backend
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── auth.ts        # Better Auth config
+│   │   │   └── db.ts          # Prisma + Neon setup
+│   │   ├── routes/            # API route handlers
+│   │   ├── services/          # Business logic
+│   │   └── middleware/        # Auth, rate limiting, etc.
+│   └── prisma/
+│       └── schema.prisma      # Database schema
+└── public/                     # Static assets
 ```
-
-### Key Files
-
-- `app/layout.tsx` - Root layout
-- `lib/db.ts` - Database client
-- `lib/auth.ts` - Authentication setup
-- `prisma/schema.prisma` - Database schema
 
 ## Common Tasks
 
 ### Adding a New Feature
 
-1. Create a feature branch
-2. Add necessary database migrations (if needed)
-3. Implement the feature
-4. Add/update tests
-5. Update documentation
+1. Determine if it's frontend-only, backend-only, or both
+2. Create a feature branch
+3. **Backend work:**
+   - Add service in `backend/src/services/`
+   - Add route in `backend/src/routes/`
+   - Add database migrations if needed
+4. **Frontend work:**
+   - Create components
+   - Add API calls using the correct client
+5. Test end-to-end
 6. Create PR
 
-### Fixing a Bug
+### Adding a New API Endpoint (Backend)
 
-1. Reproduce the bug
-2. Create a fix branch
-3. Write a test that fails (if applicable)
-4. Fix the bug
-5. Verify the fix
-6. Create PR with clear description
+1. Create or update route in `backend/src/routes/`
+2. Add service logic in `backend/src/services/`
+3. Add authentication middleware if needed
+4. Add input validation with Zod
+5. Update backend README with new endpoint
 
-### Adding a New API Route
+```typescript
+// backend/src/routes/example.ts
+router.get("/", requireAuth, async (req, res) => {
+  const session = (req as any).session;
+  const data = await exampleService.getData(session.user.id);
+  res.json(data);
+});
+```
 
-1. Create route file in `app/api/`
-2. Add authentication if needed (`requireAuth`)
-3. Add input validation (Zod schemas)
-4. Handle errors properly
-5. Return appropriate status codes
-6. Update API documentation
+### Database Changes
+
+1. Update `backend/prisma/schema.prisma`
+2. Create migration:
+   ```bash
+   cd backend
+   bun run prisma:migrate
+   ```
+3. Update related services and routes
+4. Test thoroughly
 
 ### Adding a New UI Component
 
@@ -382,21 +423,12 @@ oneurl/
 2. Make it reusable and well-typed
 3. Add proper accessibility attributes
 4. Use Tailwind CSS for styling
-5. Export from appropriate index file
-
-### Database Changes
-
-1. Update `prisma/schema.prisma`
-2. Create migration: `bun prisma migrate dev --name your-migration-name`
-3. Update related code
-4. Test thoroughly
 
 ## Getting Help
 
 - **Questions?** Open a discussion on GitHub
 - **Found a bug?** Open an issue with details
 - **Have a feature request?** Open an issue with use case
-- **Need clarification?** Comment on the relevant issue/PR
 
 ## Recognition
 
@@ -406,4 +438,3 @@ Contributors will be recognized in:
 - GitHub contributors page
 
 Thank you for contributing to OneURL! 🎉
-

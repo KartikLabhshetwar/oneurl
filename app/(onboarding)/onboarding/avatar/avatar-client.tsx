@@ -40,9 +40,11 @@ export default function AvatarClient({
         setIsUploading(false);
         
         try {
-          await fetch("/api/profile/avatar", {
+          const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+          await fetch(`${BACKEND_URL}/api/profile/avatar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ avatarUrl: newUrl }),
           });
           toastSuccess("Avatar uploaded", "Your profile picture has been updated");
@@ -87,9 +89,11 @@ export default function AvatarClient({
   const saveProfileData = async () => {
     setIsSaving(true);
     try {
-      await fetch("/api/profile", {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+      await fetch(`${BACKEND_URL}/api/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ name, bio, calLink: calLink.trim() || null }),
       });
       toastSuccess("Profile saved", "Your profile information has been updated");

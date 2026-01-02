@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { linkSchema } from "@/lib/validations/schemas";
 import { toastSuccess, toastError } from "@/lib/toast";
+import { fetchFromBackend } from "@/lib/utils/api-client";
 
 export type Link = {
   id: string;
@@ -19,7 +20,7 @@ export function useLinks() {
   return useQuery({
     queryKey: ["links"],
     queryFn: async () => {
-      const res = await fetch("/api/links");
+      const res = await fetchFromBackend("/api/links");
       if (!res.ok) {
         throw new Error("Failed to fetch links");
       }
@@ -35,9 +36,8 @@ export function useCreateLink() {
   return useMutation({
     mutationFn: async (data: { title: string; url: string; icon?: string | null }) => {
       const validated = linkSchema.parse(data);
-      const res = await fetch("/api/links", {
+      const res = await fetchFromBackend("/api/links", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           title: validated.title, 
           url: validated.url,
@@ -100,9 +100,8 @@ export function useUpdateLink() {
       id: string;
       data: { title?: string; url?: string; icon?: string | null; isActive?: boolean };
     }) => {
-      const res = await fetch(`/api/links/${id}`, {
+      const res = await fetchFromBackend(`/api/links/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
@@ -152,7 +151,7 @@ export function useDeleteLink() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/links/${id}`, {
+      const res = await fetchFromBackend(`/api/links/${id}`, {
         method: "DELETE",
       });
 
@@ -193,9 +192,8 @@ export function useReorderLinks() {
 
   return useMutation({
     mutationFn: async (linkIds: string[]) => {
-      const res = await fetch("/api/links/reorder", {
+      const res = await fetchFromBackend("/api/links/reorder", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ linkIds }),
       });
 

@@ -1,12 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { fetchFromBackend } from "@/lib/utils/api-client";
 
 export function useLinkClickCounts() {
   return useQuery({
     queryKey: ["link-click-counts"],
     queryFn: async () => {
-      const res = await fetch("/api/analytics/links");
+      const res = await fetchFromBackend("/api/analytics/links");
       if (!res.ok) {
         throw new Error("Failed to fetch link click counts");
       }
@@ -26,7 +27,7 @@ export function useLinkAnalytics(linkId: string | null) {
     queryKey: ["link-analytics", linkId],
     queryFn: async () => {
       if (!linkId) return null;
-      const res = await fetch(`/api/analytics?linkId=${linkId}`);
+      const res = await fetchFromBackend(`/api/analytics?linkId=${linkId}`);
       if (!res.ok) {
         throw new Error("Failed to fetch link analytics");
       }
@@ -45,7 +46,7 @@ export function useProfileAnalytics() {
   return useQuery({
     queryKey: ["analytics"],
     queryFn: async () => {
-      const res = await fetch("/api/analytics");
+      const res = await fetchFromBackend("/api/analytics");
       if (!res.ok) {
         throw new Error("Failed to fetch analytics");
       }

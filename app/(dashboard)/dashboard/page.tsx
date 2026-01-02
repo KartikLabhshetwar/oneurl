@@ -1,25 +1,29 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { profileService } from "@/lib/services/profile.service";
-import { db } from "@/lib/db";
 import { getAvatarUrl } from "@/lib/utils";
 import { DashboardClient } from "./dashboard-client";
+import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function DashboardPage() {
   const session = await requireAuth();
-  const profile = await profileService.getByUserId(session.user.id);
   
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-  });
+  let profileData = null;
+  try {
+    const res = await fetchFromBackendServer("/api/profile");
+    if (res.ok) {
+      profileData = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+  }
 
-  const avatarUrl = getAvatarUrl(user || { avatarUrl: null, image: null });
+  const avatarUrl = profileData?.avatarUrl || session.user.image || null;
 
   return (
     <DashboardClient
       initialProfile={{
-        name: user?.name || session.user.name || "User",
-        username: user?.username || null,
-        bio: user?.bio || null,
+        name: profileData?.name || session.user.name || "User",
+        username: profileData?.username || null,
+        bio: profileData?.bio || null,
         avatarUrl,
       }}
     />

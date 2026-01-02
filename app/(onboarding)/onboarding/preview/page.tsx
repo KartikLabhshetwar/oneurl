@@ -1,14 +1,22 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { profileService } from "@/lib/services/profile.service";
 import PreviewClient from "./preview-client";
-import { getAvatarUrl } from "@/lib/utils";
 import { PreviewWrapper } from "./preview-wrapper";
+import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function PreviewPage() {
   const session = await requireAuth();
-  const profile = await profileService.getByUserId(session.user.id);
+  
+  let profileData = null;
+  try {
+    const res = await fetchFromBackendServer("/api/profile");
+    if (res.ok) {
+      profileData = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+  }
 
-  if (!profile) {
+  if (!profileData) {
     return (
       <div className="w-full max-w-md mx-auto px-4 py-12">
         <p>Profile not found</p>
@@ -27,12 +35,12 @@ export default async function PreviewPage() {
 
       <div className="mx-auto w-full">
         <PreviewWrapper
-          initialName={profile.name}
-          initialUsername={profile.username}
-          initialBio={profile.bio || null}
-          initialAvatarUrl={getAvatarUrl(profile)}
-          initialTitle={profile.profile?.title || null}
-          initialCalLink={profile.profile?.calLink || null}
+          initialName={profileData.name}
+          initialUsername={profileData.username}
+          initialBio={profileData.bio || null}
+          initialAvatarUrl={profileData.avatarUrl || null}
+          initialTitle={profileData.profile?.title || null}
+          initialCalLink={profileData.profile?.calLink || null}
         />
       </div>
 

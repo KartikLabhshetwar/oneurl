@@ -14,25 +14,45 @@
 - **Responsive Design** - Your profile looks perfect on every device
 - **Fast & Modern** - Built with Next.js 16 and React 19 for instant page loads
 
+## Architecture
+
+```
+┌─────────────────────────────────┐      ┌─────────────────────────────────┐
+│      FRONTEND (Next.js)         │      │      BACKEND (Express)          │
+│      oneurl.live (:3000)        │ ───► │      api.oneurl.live (:3001)    │
+└─────────────────────────────────┘      └─────────────────────────────────┘
+                                                        │
+                                                        ▼
+                                         ┌─────────────────────────────────┐
+                                         │      DATABASE (Neon)            │
+                                         │      PostgreSQL Serverless      │
+                                         └─────────────────────────────────┘
+```
+
+**Key Principle:** The frontend never accesses the database directly. All data operations go through the backend API.
+
 ## Tech Stack
 
+### Frontend
 - **Framework:** Next.js 16 (App Router)
-- **Backend:** Express.js (separate service for link previews)
 - **Language:** TypeScript
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** Better Auth
-- **File Upload:** UploadThing + React Dropzone
 - **State Management:** TanStack Query (React Query)
 - **Styling:** Tailwind CSS
 - **UI Components:** Base UI React
 - **Charts:** Recharts
+
+### Backend
+- **Framework:** Express.js
+- **Database:** PostgreSQL with Prisma ORM + Neon Serverless
+- **Authentication:** Better Auth (Google OAuth)
+- **File Upload:** UploadThing
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
 - Node.js 20+ or Bun installed
-- PostgreSQL database (local or cloud like Neon)
+- PostgreSQL database (Neon recommended for serverless)
 - Google OAuth credentials
 - UploadThing account (free tier available)
 
@@ -48,67 +68,62 @@ cd oneurl
 ### 2. Install Dependencies
 
 ```bash
+# Frontend
 bun install
-# or
-npm install
+
+# Backend
+cd backend && bun install && cd ..
 ```
 
 ### 3. Set Up Environment Variables
 
-Create a `.env` file in the root directory:
+**Frontend `.env`** (root directory):
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/oneurl"
+# Backend API URL
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
 
-# Better Auth
-BETTER_AUTH_SECRET="your-secret-key-here"
-BETTER_AUTH_URL="http://localhost:3000"
-
-# Google OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
-
-# UploadThing - for file uploads
-UPLOADTHING_TOKEN="your-uploadthing-token"
-
-# Backend Service
-# Development: http://localhost:3001
-# Production: https://api.oneurl.live
-BACKEND_URL="http://localhost:3001"
+# UploadThing (for client-side uploads)
+NEXT_PUBLIC_UPLOADTHING_APP_ID=your-app-id
 ```
 
-> **Note:** UploadThing is optional. If not configured, you can still use the app but avatar uploads won't work. Sign up at [uploadthing.com](https://uploadthing.com) to get your credentials.
+**Backend `.env`** (`backend/` directory):
+
+```env
+# Database - Neon PostgreSQL
+DATABASE_URL=postgresql://user:password@host.neon.tech/dbname?sslmode=require
+
+# Server
+PORT=3001
+NODE_ENV=development
+BACKEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
+
+# Better Auth
+BETTER_AUTH_URL=http://localhost:3001
+BETTER_AUTH_SECRET=your-secret-key-minimum-32-characters
+
+# Google OAuth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# UploadThing
+UPLOADTHING_TOKEN=your-uploadthing-token
+```
 
 ### 4. Set Up Database
 
 ```bash
+cd backend
+
 # Generate Prisma Client
-bun prisma generate
+bun run prisma:generate
 
 # Run migrations
-bun prisma migrate dev
+bun run prisma:migrate
 ```
 
-### 5. Set Up Backend Service
-
-The backend service handles link preview metadata fetching. Create a `.env` file in the `backend` directory:
-
-```env
-PORT=3001
-FRONTEND_URL=http://localhost:3000
-NODE_ENV=development
-```
-
-Install backend dependencies:
-
-```bash
-cd backend
-bun install
-cd ..
-```
-
-### 6. Run the Development Servers
+### 5. Run the Development Servers
 
 **Option 1: Run both services together**
 ```bash
@@ -121,10 +136,11 @@ bun run dev:all
 bun run dev
 
 # Terminal 2 - Backend
-bun run dev:backend
+cd backend && bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser. The backend service runs on [http://localhost:3001](http://localhost:3001).
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:3001](http://localhost:3001)
 
 ## Project Structure
 
@@ -135,25 +151,37 @@ oneurl/
 │   ├── (dashboard)/       # Dashboard routes (protected)
 │   ├── (onboarding)/      # Onboarding flow
 │   ├── [username]/        # Public profile pages
-│   └── api/               # API routes
+│   └── api/               # API route proxies
 ├── backend/               # Express backend service
 │   ├── src/
+│   │   ├── config/        # Auth, DB, UploadThing config
 │   │   ├── routes/        # API routes
-│   │   ├── middleware/    # Rate limiting, validation, error handling
-│   │   └── utils/         # Metadata fetching utilities
-│   └── package.json       # Backend dependencies
+│   │   ├── services/      # Business logic
+│   │   ├── middleware/    # Rate limiting, validation, auth
+│   │   └── server.ts      # Express app entry
+│   └── prisma/            # Database schema
 ├── components/            # React components
 │   ├── landing/           # Landing page components
 │   └── ui/                # UI component library
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utility functions and services
-│   ├── generated/         # Generated Prisma client
-│   ├── hooks/             # Custom hooks
-│   ├── services/          # Business logic services
-│   └── validations/       # Zod schemas
-├── prisma/                # Prisma schema and migrations
+├── lib/                   # Utility functions
+│   ├── auth.ts            # Server-side auth utilities
+│   ├── auth-client.ts     # Client-side auth
+│   ├── auth-guard.ts      # Route protection
+│   └── utils/             # API clients
 └── public/                # Static assets
 ```
+
+## Backend API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/api/auth/*` | Authentication (Better Auth + Google OAuth) |
+| `/api/profile` | User profile management |
+| `/api/links` | Link CRUD operations |
+| `/api/track` | Click tracking |
+| `/api/analytics` | Analytics data |
+| `/api/preview` | URL metadata fetching |
+| `/api/uploadthing` | File uploads |
 
 ## Available Scripts
 
@@ -161,7 +189,6 @@ oneurl/
 - `bun run dev` - Start Next.js development server
 - `bun run build` - Build for production
 - `bun run start` - Start production server
-- `bun run lint` - Run ESLint
 
 **Backend:**
 - `bun run dev:backend` - Start backend development server
@@ -169,98 +196,59 @@ oneurl/
 - `bun run start:backend` - Start backend production server
 
 **Both:**
-- `bun run dev:all` - Run both frontend and backend in development mode
+- `bun run dev:all` - Run both frontend and backend
 
-## Additional Setup
-
-### Google OAuth Setup
+## Google OAuth Setup
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one
 3. Enable Google+ API
 4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-6. Copy Client ID and Client Secret to `.env`
-
-### UploadThing Setup (Optional)
-
-UploadThing is used for secure file uploads (avatars). To enable avatar uploads:
-
-1. Sign up at [uploadthing.com](https://uploadthing.com) (free tier available)
-2. Create a new app
-3. Copy your `UPLOADTHING_TOKEN`
-4. Add them to your `.env` file
-
-The app will work without UploadThing, but avatar upload functionality will be disabled.
-
-## Usage
-
-1. Sign In - Click "Sign In" and authenticate with Google
-2. Onboarding - Complete the onboarding flow:
-   - Choose a username
-   - Upload an avatar (optional)
-   - Add your links
-   - Preview your profile
-3. Dashboard - Manage your profile, links, and view analytics
-4. Share - Your profile is available at `oneurl.live/yourusername`
+5. Add authorized redirect URIs:
+   - Development: `http://localhost:3001/api/auth/callback/google`
+   - Production: `https://api.oneurl.live/api/auth/callback/google`
+6. Copy Client ID and Client Secret to backend `.env`
 
 ## Deployment
 
-### Deploy to Vercel
+### Frontend (Vercel)
 
-1. Push your code to GitHub
-2. Import your repository to Vercel
-3. Add all environment variables in Vercel dashboard:
-   - `DATABASE_URL`
-   - `BETTER_AUTH_SECRET`
-   - `BETTER_AUTH_URL` (your production URL)
-   - `GOOGLE_CLIENT_ID`
-   - `GOOGLE_CLIENT_SECRET`
-   - `UPLOADTHING_TOKEN` (if using file uploads)
-4. Deploy!
+1. Push code to GitHub
+2. Import repository to Vercel
+3. Add environment variables:
+   - `NEXT_PUBLIC_BACKEND_URL=https://api.oneurl.live`
+4. Deploy
 
-### Database
+### Backend (Railway/Render/Fly.io)
 
-For production, use a managed PostgreSQL service like:
-
-- [Neon](https://neon.tech/)
-- [Supabase](https://supabase.com/)
-- [Railway](https://railway.app/)
-
-Update your `DATABASE_URL` in the deployment environment variables.
+1. Deploy the `backend/` directory
+2. Add all environment variables from backend `.env`
+3. Set `FRONTEND_URL=https://oneurl.live`
+4. Configure DNS: `api.oneurl.live` → backend service
 
 ### Production Checklist
 
 **Frontend:**
-- [ ] Set up production database
-- [ ] Configure Google OAuth with production redirect URI (`https://oneurl.live/api/auth/callback/google`)
-- [ ] Set `BETTER_AUTH_URL` to `https://oneurl.live`
-- [ ] Set `BACKEND_URL` to `https://api.oneurl.live`
-- [ ] Configure UploadThing with production domain (if using)
-- [ ] Update `next.config.ts` image domains if needed
-- [ ] Test all features in production environment
+- [ ] Set `NEXT_PUBLIC_BACKEND_URL` to production backend URL
 
 **Backend:**
-- [ ] Deploy backend service (Railway, Render, Fly.io, etc.)
+- [ ] Set up Neon PostgreSQL database
+- [ ] Configure Google OAuth with production redirect URI
 - [ ] Set `FRONTEND_URL` to `https://oneurl.live`
+- [ ] Set `BACKEND_URL` to `https://api.oneurl.live`
 - [ ] Set `NODE_ENV` to `production`
-- [ ] Configure DNS: Point `api.oneurl.live` to backend service
-- [ ] Test backend health endpoint: `https://api.oneurl.live/health`
-- [ ] Verify CORS allows requests from `oneurl.live`
+- [ ] Verify CORS allows frontend origin
+- [ ] Test health endpoint: `https://api.oneurl.live/health`
 
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guidelines](./CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-Quick start:
+Contributions are welcome! Please read our [Contributing Guidelines](./CONTRIBUTING.md) for details.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-For detailed guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

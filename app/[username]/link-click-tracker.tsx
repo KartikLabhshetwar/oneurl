@@ -84,14 +84,16 @@ async function trackClickWithRetry(
   }
 
   const clientId = getOrCreateClientId();
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await fetch("/api/track", {
+      const response = await fetch(`${BACKEND_URL}/api/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ linkId, clientId }),
         signal: AbortSignal.timeout(5000),
+        credentials: "include",
       });
 
       if (response.ok) {

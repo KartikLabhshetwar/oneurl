@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toastSuccess, toastError } from "@/lib/toast";
+import { fetchFromBackend } from "@/lib/utils/api-client";
 
 export type Profile = {
   name: string;
@@ -18,7 +19,7 @@ export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
-      const res = await fetch("/api/profile");
+      const res = await fetchFromBackend("/api/profile");
       if (!res.ok) {
         throw new Error("Failed to fetch profile");
       }
@@ -33,9 +34,8 @@ export function useUpdateProfile() {
 
   return useMutation({
     mutationFn: async (data: { name?: string; bio?: string; username?: string; calLink?: string | null }) => {
-      const res = await fetch("/api/profile", {
+      const res = await fetchFromBackend("/api/profile", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
@@ -61,9 +61,8 @@ export function useUpdateAvatar() {
 
   return useMutation({
     mutationFn: async (avatarUrl: string) => {
-      const res = await fetch("/api/profile/avatar", {
+      const res = await fetchFromBackend("/api/profile/avatar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ avatarUrl }),
       });
 
@@ -86,7 +85,7 @@ export function useUpdateAvatar() {
 export function useDeleteAccount() {
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/profile", {
+      const res = await fetchFromBackend("/api/profile", {
         method: "DELETE",
       });
 

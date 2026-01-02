@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getFallbackPreviewImage } from "@/lib/utils/link-preview-image";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -44,11 +43,10 @@ export async function GET(req: Request) {
       const errorData = await response.json().catch(() => ({}));
       
       if (response.status === 403 || response.status === 408 || response.status === 404) {
-        const fallback = await getFallbackPreviewImage();
         return NextResponse.json({
           title: null,
           description: null,
-          image: fallback,
+          image: null,
           logo: null,
           url: validUrl,
         });
@@ -60,25 +58,19 @@ export async function GET(req: Request) {
     const result = await response.json();
     const metadata = result.data;
 
-    let image = metadata.image;
-    if (!image) {
-      image = await getFallbackPreviewImage();
-    }
-
     return NextResponse.json({
       title: metadata.title,
       description: metadata.description,
-      image,
+      image: metadata.image || null,
       logo: metadata.logo,
       url: metadata.url,
     });
   } catch (error) {
     console.error("Error fetching link preview:", error);
-    const fallback = await getFallbackPreviewImage();
     return NextResponse.json({
       title: null,
       description: null,
-      image: fallback,
+      image: null,
       logo: null,
       url: validUrl,
     });

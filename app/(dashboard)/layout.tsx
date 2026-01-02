@@ -1,11 +1,11 @@
 import { requireAuth } from "@/lib/auth-guard";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import {
   SidebarProvider,
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./dashboard-sidebar";
+import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function DashboardLayout({
   children,
@@ -14,11 +14,17 @@ export default async function DashboardLayout({
 }) {
   const session = await requireAuth();
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-  });
+  let user = null;
+  try {
+    const res = await fetchFromBackendServer("/api/profile");
+    if (res.ok) {
+      user = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+  }
 
-  if (!user?.isOnboarded) {
+  if (!session.user) {
     redirect("/onboarding/username");
   }
 
@@ -26,10 +32,10 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <DashboardSidebar
         user={{
-          name: user.name,
-          username: user.username,
-          avatarUrl: user.avatarUrl,
-          image: user.image,
+          name: user?.name || session.user.name,
+          username: user?.username,
+          avatarUrl: user?.avatarUrl,
+          image: session.user.image,
         }}
       />
       <SidebarInset>

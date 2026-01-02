@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { Link2, BadgeCheck } from "lucide-react";
-import { profileService } from "@/lib/services/profile.service";
 import type { Metadata } from "next";
 import Image from "next/image";
 import {
@@ -24,7 +23,24 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  const user = await profileService.getByUsername(username);
+  
+  if (!/^[a-zA-Z0-9_-]+$/.test(username) || username.includes('.')) {
+    return { title: "Profile Not Found" };
+  }
+  
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:3001";
+  
+  let user = null;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/profile/username/${username}`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      user = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch profile for metadata:", error);
+  }
 
   if (!user || !user.profile?.isPublished) {
     return {
@@ -32,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const avatarUrl = getAvatarUrl(user);
+  const avatarUrl = user.avatarUrl || user.image || null;
   const profileUrl = `https://oneurl.live/${username}`;
   const images = avatarUrl 
     ? [{ url: avatarUrl, width: 400, height: 400, alt: `${user.name}'s profile picture` }]
@@ -111,19 +127,38 @@ function parseBioWithCode(bio: string) {
 }
 
 
+const VALID_USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+
 export default async function PublicProfilePage({ params }: Props) {
   const { username } = await params;
-  const user = await profileService.getByUsername(username);
+  
+  if (!VALID_USERNAME_REGEX.test(username) || username.includes('.')) {
+    notFound();
+  }
+  
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || "http://localhost:3001";
+  
+  let user = null;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/profile/username/${username}`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      user = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+  }
 
   if (!user || !user.profile?.isPublished) {
     notFound();
   }
 
-  const links = user.profile.links.filter((link) => link.isActive);
-  const iconLinks = links.filter((link) => link.icon);
-  const regularLinks = links.filter((link) => !link.icon);
+  const links = (user.profile?.links || []).filter((link: any) => link.isActive);
+  const iconLinks = links.filter((link: any) => link.icon);
+  const regularLinks = links.filter((link: any) => !link.icon);
 
-  const avatarUrl = getAvatarUrl(user);
+  const avatarUrl = user.avatarUrl || user.image || null;
 
   return (
     <div className="min-h-screen bg-zinc-100">

@@ -12,8 +12,10 @@ export default function PreviewClient() {
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      const res = await fetch("/api/profile/publish", {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+      const res = await fetch(`${BACKEND_URL}/api/profile/publish`, {
         method: "POST",
+        credentials: "include",
       });
 
       if (res.ok) {

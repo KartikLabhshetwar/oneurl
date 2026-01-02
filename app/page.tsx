@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSessionWithOnboardingStatus } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { LandingNav } from "@/components/landing/nav";
 import { LandingHero } from "@/components/landing/hero";
@@ -8,15 +7,10 @@ import { LandingCTA } from "@/components/landing/cta";
 import { LandingFooter } from "@/components/landing/footer";
 
 export default async function HomePage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const { session, isOnboarded } = await getSessionWithOnboardingStatus();
 
   if (session) {
-    const { db } = await import("@/lib/db");
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (user?.isOnboarded) {
+    if (isOnboarded) {
       redirect("/dashboard");
     } else {
       redirect("/onboarding/username");

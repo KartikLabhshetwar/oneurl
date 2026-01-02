@@ -88,9 +88,11 @@ export default function LinksPage() {
     setGlobalError("");
 
     try {
-      const res = await fetch("/api/links", {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+      const res = await fetch(`${BACKEND_URL}/api/links`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ links }),
       });
 

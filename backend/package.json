@@ -5,22 +5,33 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "cors": "^2.8.5",
     "zod": "^4.3.4",
-    "cheerio": "^1.1.2"
+    "cheerio": "^1.1.2",
+    "@prisma/client": "^7.2.0",
+    "@prisma/adapter-neon": "^7.2.0",
+    "better-auth": "^1.4.9",
+    "uploadthing": "^7.7.4",
+    "pg": "^8.16.3",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/cors": "^2.8.17",
     "@types/node": "^20.0.0",
+    "@types/pg": "^8.16.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "prisma": "^7.2.0"
   }
 }

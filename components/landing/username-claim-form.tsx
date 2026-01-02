@@ -36,9 +36,11 @@ export function UsernameClaimForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/profile/check-username", {
+      const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+      const res = await fetch(`${BACKEND_URL}/api/profile/check-username`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username: value }),
       });
 

@@ -24,8 +24,12 @@ export function SignInButton({
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
+      const origin = window.location.origin;
       await authClient.signIn.social({
         provider,
+        callbackURL: origin,
+        newUserCallbackURL: `${origin}/onboarding/username`,
+        errorCallbackURL: `${origin}/login?error=auth`,
       });
     } catch (error) {
       console.error("Sign in error:", error);

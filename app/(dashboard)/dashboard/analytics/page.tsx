@@ -1,7 +1,4 @@
 import { BarChart3 } from "lucide-react";
-import { requireAuth } from "@/lib/auth-guard";
-import { analyticsService } from "@/lib/services/analytics.service";
-import { db } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
@@ -11,15 +8,40 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 import { AnalyticsClient } from "./analytics-client";
+import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function AnalyticsPage() {
-  const session = await requireAuth();
-  const profile = await db.profile.findUnique({
-    where: { userId: session.user.id },
-    include: { links: true },
-  });
+  let stats = null;
+  let links: Array<{ id: string; title: string; url: string; isActive: boolean }> = [];
+  let hasError = false;
 
-  if (!profile) {
+  try {
+    const [analyticsRes, linksRes] = await Promise.all([
+      fetchFromBackendServer("/api/analytics"),
+      fetchFromBackendServer("/api/links"),
+    ]);
+
+    if (analyticsRes.ok) {
+      stats = await analyticsRes.json();
+    } else if (analyticsRes.status === 401) {
+      hasError = true;
+    }
+
+    if (linksRes.ok) {
+      const linksData = await linksRes.json();
+      links = (linksData.links || []).map((link: any) => ({
+        id: link.id,
+        title: link.title,
+        url: link.url,
+        isActive: link.isActive,
+      }));
+    }
+  } catch (error) {
+    console.error("Failed to fetch analytics data:", error);
+    hasError = true;
+  }
+
+  if (hasError || !stats) {
     return (
       <div className="p-8">
         <div className="mb-8">
@@ -47,8 +69,6 @@ export default async function AnalyticsPage() {
     );
   }
 
-  const stats = await analyticsService.getProfileStats(profile.id);
-
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -60,12 +80,7 @@ export default async function AnalyticsPage() {
 
       <AnalyticsClient
         initialStats={stats}
-        links={profile.links.map((link) => ({
-          id: link.id,
-          title: link.title,
-          url: link.url,
-          isActive: link.isActive,
-        }))}
+        links={links}
       />
     </div>
   );

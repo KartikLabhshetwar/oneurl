@@ -1,6 +1,19 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 import express from "express";
 import cors from "cors";
 import previewRouter from "./routes/preview.js";
+import authRouter from "./routes/auth.js";
+import uploadthingRouter from "./routes/uploadthing.js";
+import linksRouter from "./routes/links.js";
+import profileRouter from "./routes/profile.js";
+import trackRouter from "./routes/track.js";
+import analyticsRouter from "./routes/analytics.js";
 import { validatePreviewRequest } from "./middleware/validator.js";
 import { apiRateLimiter, strictRateLimiter } from "./middleware/rateLimiter.js";
 import { requestLogger } from "./middleware/logger.js";
@@ -33,19 +46,31 @@ app.use(requestLogger);
 
 app.get("/", (req, res) => {
   res.json({
-    service: "OneURL Link Preview API",
+    service: "OneURL Backend API",
     version: "1.0.0",
     endpoints: {
       health: "/health",
       preview: "/api/preview?url={url}",
+      auth: "/api/auth/*",
+      uploadthing: "/api/uploadthing",
+      links: "/api/links",
+      profile: "/api/profile",
+      track: "/api/track",
+      analytics: "/api/analytics",
     },
-    documentation: "See README.md for API usage",
   });
 });
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+app.use("/api/auth", authRouter);
+app.use("/api/uploadthing", uploadthingRouter);
+app.use("/api/links", linksRouter);
+app.use("/api/profile", profileRouter);
+app.use("/api/track", trackRouter);
+app.use("/api/analytics", analyticsRouter);
 
 app.use(
   "/api/preview",
@@ -59,7 +84,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`[Server] Link preview service running on port ${PORT}`);
+  console.log(`[Server] OneURL Backend running on port ${PORT}`);
   console.log(`[Server] Environment: ${process.env.NODE_ENV || "development"}`);
 });
 

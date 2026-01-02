@@ -1,20 +1,14 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getSessionWithOnboardingStatus } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/sign-in-button";
 import { AuthSplitLayout } from "@/components/auth-split-layout";
 import Link from "next/link";
 
 export default async function LoginPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const { session, isOnboarded } = await getSessionWithOnboardingStatus();
 
   if (session) {
-    const { db } = await import("@/lib/db");
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (user?.isOnboarded) {
+    if (isOnboarded) {
       redirect("/dashboard");
     } else {
       redirect("/onboarding/username");
@@ -76,4 +70,3 @@ export default async function LoginPage() {
     </AuthSplitLayout>
   );
 }
-

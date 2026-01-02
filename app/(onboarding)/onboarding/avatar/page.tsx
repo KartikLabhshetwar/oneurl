@@ -1,21 +1,25 @@
 import { requireAuth } from "@/lib/auth-guard";
-import { db } from "@/lib/db";
-import { getAvatarUrl } from "@/lib/utils";
 import AvatarClient from "./avatar-client";
+import { fetchFromBackendServer } from "@/lib/utils/server-api-client";
 
 export default async function AvatarPage() {
   const session = await requireAuth();
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-  });
-
-  const googleImageUrl = getAvatarUrl(user || { image: null, avatarUrl: null });
+  
+  let profileData = null;
+  try {
+    const res = await fetchFromBackendServer("/api/profile");
+    if (res.ok) {
+      profileData = await res.json();
+    }
+  } catch (error) {
+    console.error("Failed to fetch profile:", error);
+  }
 
   return (
     <AvatarClient
-      initialImageUrl={googleImageUrl}
-      initialName={user?.name || ""}
-      initialBio={user?.bio || ""}
+      initialImageUrl={profileData?.avatarUrl || session.user.image || null}
+      initialName={profileData?.name || session.user.name || ""}
+      initialBio={profileData?.bio || ""}
     />
   );
 }
