@@ -11,10 +11,13 @@ const getTrustedOrigins = (): string[] => {
   if (baseURL) {
     origins.push(baseURL);
     const url = new URL(baseURL);
-    if (url.hostname.startsWith("www.")) {
-      origins.push(baseURL.replace("www.", ""));
+    const hostname = url.hostname;
+    
+    if (hostname.startsWith("www.")) {
+      const nonWww = baseURL.replace("www.", "");
+      origins.push(nonWww);
     } else {
-      origins.push(baseURL.replace(url.hostname, `www.${url.hostname}`));
+      origins.push(baseURL.replace(hostname, `www.${hostname}`));
     }
   }
   
@@ -36,7 +39,6 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      redirectURI: `${baseURL}/api/auth/callback/google`,
     },
   },
 });
