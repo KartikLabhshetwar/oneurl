@@ -1,7 +1,28 @@
 import Image from "next/image";
 import { UsernameClaimForm } from "./username-claim-form";
+import { AvatarCircles } from "@/components/ui/avatar-circles";
+import { profileService } from "@/lib/services/profile.service";
+import { getAvatarUrl } from "@/lib/utils";
 
-export function LandingHero() {
+export async function LandingHero() {
+  const [profiles, totalCount] = await Promise.all([
+    profileService.getPublishedProfiles(5),
+    profileService.getPublishedProfileCount(),
+  ]);
+
+  const avatarData = profiles
+    .map((user) => {
+      const avatarUrl = getAvatarUrl(user);
+      if (!avatarUrl || !user.username) return null;
+      return {
+        imageUrl: avatarUrl,
+        profileUrl: `/${user.username}`,
+      };
+    })
+    .filter((item): item is { imageUrl: string; profileUrl: string } => item !== null);
+
+  const remainingCount = Math.max(0, totalCount - avatarData.length);
+
   return (
     <section className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-24 md:pb-32">
       <div className="space-y-8 text-center">
@@ -13,6 +34,19 @@ export function LandingHero() {
             Create a beautiful profile page to share all your important links in one place. Open source alternative to Linktree.
           </p>
         </div>
+        {avatarData.length > 0 && (
+          <div className="flex flex-col items-center gap-3 pt-4">
+            <div className="flex items-center gap-2">
+              <AvatarCircles
+                avatarUrls={avatarData}
+                numPeople={remainingCount}
+              />
+              <span className="text-xs text-zinc-600">
+                {totalCount.toLocaleString()} {totalCount === 1 ? "person" : "people"} have created their profile
+              </span>
+            </div>
+          </div>
+        )}
         <div className="pt-8 flex justify-center">
           <UsernameClaimForm />
         </div>

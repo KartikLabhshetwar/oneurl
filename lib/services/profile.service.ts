@@ -83,5 +83,36 @@ export const profileService = {
       data: { isPublished: true },
     });
   },
+
+  async getPublishedProfiles(limit: number = 10) {
+    return db.user.findMany({
+      where: {
+        profile: {
+          isPublished: true,
+        },
+        username: { not: null },
+      },
+      select: {
+        username: true,
+        avatarUrl: true,
+        image: true,
+      },
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  },
+
+  async getPublishedProfileCount() {
+    return db.user.count({
+      where: {
+        profile: {
+          isPublished: true,
+        },
+        username: { not: null },
+      },
+    });
+  },
 };
 

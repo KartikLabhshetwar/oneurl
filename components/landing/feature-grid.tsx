@@ -1,4 +1,4 @@
-import { LayoutGrid, BarChart3, Zap, Shield, Globe, Smartphone, Fingerprint, PenTool } from "lucide-react";
+import { BarChart3, Zap, Shield, Smartphone, Fingerprint, PenTool } from "lucide-react";
 
 const features = [
   {
@@ -35,29 +35,36 @@ const features = [
 
 export function LandingFeatures() {
   return (
-    <section className="border-t-2 border-dashed border-zinc-200 pt-24 md:pt-32 pb-24 md:pb-32">
+    <section className="border-t-2 border-dashed border-zinc-200 pt-24 md:pt-32 pb-24 md:pb-32 bg-zinc-100">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12">
-            <h2 className="text-2xl md:text-3xl font-medium mb-4">Everything you need.</h2>
-            <p className="text-sm text-zinc-600 max-w-2xl">
-              Powerful features to help you share your online presence effectively.
-            </p>
+        <div className="mb-16">
+          <h2 className="text-2xl md:text-3xl font-medium mb-4">Everything you need.</h2>
+          <p className="text-sm text-zinc-600 max-w-2xl">
+            Powerful features to help you share your online presence effectively.
+          </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
-           {features.map((f, i) => (
-             <div key={i} className="space-y-2 p-4 bg-zinc-50 border border-zinc-200 hover:border-zinc-300 transition-colors w-full max-w-sm">
-               <div className="flex items-center gap-2">
-                 <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                   <f.icon className="w-4 h-4 text-foreground" />
-                 </div>
-                 <h3 className="text-xs font-medium">{f.title}</h3>
-               </div>
-               <p className="text-xs text-zinc-600 leading-relaxed pl-8">{f.description}</p>
-             </div>
-           ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, i) => (
+            <div 
+              key={i} 
+              className="bg-white rounded-lg border border-zinc-200 p-6 space-y-3 hover:border-zinc-300 transition-colors"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center shrink-0">
+                  <feature.icon className="w-5 h-5 text-zinc-900" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <h3 className="text-sm font-semibold text-zinc-900">{feature.title}</h3>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
-  )
+  );
 }

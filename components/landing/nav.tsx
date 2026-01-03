@@ -17,7 +17,10 @@ export function LandingNav() {
            />
         </Link>
         <div className="flex items-center gap-6">
-          <Button render={<Link href="/login" />} className="text-sm font-medium hover:text-foreground transition-colors">
+          <Button 
+            render={<Link href="/login" />} 
+            className="text-sm font-medium bg-zinc-900 text-white border-zinc-900 hover:bg-zinc-800 hover:border-zinc-800 transition-colors"
+          >
             Log in
           </Button>
           <GitHubStars repo="KartikLabhshetwar/oneurl" /> 

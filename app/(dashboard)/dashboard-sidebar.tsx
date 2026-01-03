@@ -127,7 +127,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           <PopoverPopup className="[&_[data-slot=popover-viewport]]:p-1">
             <Button
               variant="destructive"
-              className="w-full justify-start"
+              className="w-full justify-start rounded-lg border border-red-200/50 shadow-sm hover:bg-red-600 hover:border-red-300/50 transition-colors"
               onClick={async () => {
                 setIsPopoverOpen(false);
                 try {
@@ -141,7 +141,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                 }
               }}
             >
-              <LogOut />
+              <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
             </Button>
           </PopoverPopup>

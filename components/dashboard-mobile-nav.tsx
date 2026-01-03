@@ -118,7 +118,7 @@ export function DashboardMobileNav({ user }: DashboardMobileNavProps) {
               </div>
               <Button
                 variant="destructive"
-                className="w-full justify-start"
+                className="w-full justify-start rounded-lg border border-red-200/50 shadow-sm hover:bg-red-600 hover:border-red-300/50 transition-colors"
                 onClick={handleSignOut}
               >
                 <LogOut className="h-4 w-4" />

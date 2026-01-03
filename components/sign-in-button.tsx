@@ -10,6 +10,7 @@ interface SignInButtonProps {
   className?: string;
   size?: "default" | "sm" | "lg" | "icon";
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  callbackURL?: string;
 }
 
 export function SignInButton({
@@ -18,6 +19,7 @@ export function SignInButton({
   className,
   size,
   variant,
+  callbackURL,
 }: SignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,6 +28,7 @@ export function SignInButton({
     try {
       await authClient.signIn.social({
         provider,
+        callbackURL: callbackURL || "/",
       });
     } catch (error) {
       console.error("Sign in error:", error);

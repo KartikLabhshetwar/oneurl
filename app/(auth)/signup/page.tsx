@@ -35,6 +35,7 @@ export default async function SignUpPage() {
           className="w-full bg-zinc-900 hover:bg-zinc-800 text-white border-zinc-900 shadow-sm hover:shadow-md transition-all duration-200 font-medium" 
           size="default" 
           variant="default"
+          callbackURL="/signup"
         >
           <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
             <path
