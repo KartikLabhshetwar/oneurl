@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { analyticsService } from "@/lib/services/analytics.service";
 import { db } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
-    const session = await requireAuth();
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
     const profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
     });
 
     if (!profile) {
@@ -18,7 +26,6 @@ export async function GET(req: Request) {
       });
     }
 
-    const { searchParams } = new URL(req.url);
     const linkId = searchParams.get("linkId");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
@@ -52,9 +59,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json(stats);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     console.error("Error fetching analytics:", error);
     return NextResponse.json(
       { error: "Failed to fetch analytics" },
@@ -62,4 +66,3 @@ export async function GET(req: Request) {
     );
   }
 }
-

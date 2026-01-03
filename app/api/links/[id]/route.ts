@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { linkService } from "@/lib/services/link.service";
 import { linkUpdateSchema } from "@/lib/validations/schemas";
 import { db } from "@/lib/db";
@@ -11,9 +10,15 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAuth();
     const { id } = await params;
-    const body = await req.json();
+    const { userId, ...body } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     const link = await db.link.findUnique({ where: { id } });
     if (!link) {
@@ -24,7 +29,7 @@ export async function PATCH(
       where: { id: link.profileId },
     });
 
-    if (profile?.userId !== session.user.id) {
+    if (profile?.userId !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -78,9 +83,6 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ path: string[]; message: string }> };
       const firstError = zodError.issues[0];
@@ -101,8 +103,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAuth();
     const { id } = await params;
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     const link = await db.link.findUnique({ where: { id } });
     if (!link) {
@@ -113,7 +122,7 @@ export async function DELETE(
       where: { id: link.profileId },
     });
 
-    if (profile?.userId !== session.user.id) {
+    if (profile?.userId !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -126,13 +135,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     return NextResponse.json(
       { error: "Failed to delete link" },
       { status: 500 }
     );
   }
 }
-

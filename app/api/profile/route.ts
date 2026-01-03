@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { profileService } from "@/lib/services/profile.service";
 
 export async function GET(req: Request) {
   try {
-    const session = await requireAuth();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId") || session.user.id;
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     const user = await profileService.getByUserId(userId);
 
@@ -30,9 +35,6 @@ export async function GET(req: Request) {
 
     return NextResponse.json(response);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     return NextResponse.json(
       { error: "Failed to fetch profile" },
       { status: 500 }
@@ -42,27 +44,33 @@ export async function GET(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const session = await requireAuth();
-    const { name, bio, username, calLink } = await req.json();
+    const { userId, name, bio, username, calLink } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     if (username) {
-      await profileService.updateUsername(session.user.id, username);
+      await profileService.updateUsername(userId, username);
     }
 
     if (bio !== undefined) {
-      await profileService.updateUserFields(session.user.id, { bio });
+      await profileService.updateUserFields(userId, { bio });
     }
 
     if (name) {
       const { db } = await import("@/lib/db");
       await db.user.update({
-        where: { id: session.user.id },
+        where: { id: userId },
         data: { name },
       });
     }
 
     if (calLink !== undefined) {
-      await profileService.updateProfile(session.user.id, { 
+      await profileService.updateProfile(userId, { 
         calLink,
         theme: "default"
       });
@@ -70,9 +78,6 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to update profile" },
       { status: 400 }
@@ -80,14 +85,22 @@ export async function PATCH(req: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
   try {
-    const session = await requireAuth();
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
     const { db } = await import("@/lib/db");
     const { deleteAvatarImage } = await import("@/lib/utils/link-preview-image");
 
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
     });
 
     if (user?.avatarUrl) {
@@ -95,14 +108,11 @@ export async function DELETE() {
     }
 
     await db.user.delete({
-      where: { id: session.user.id },
+      where: { id: userId },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     return NextResponse.json(
       { error: "Failed to delete account" },
       { status: 500 }

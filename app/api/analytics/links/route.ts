@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { analyticsService } from "@/lib/services/analytics.service";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await requireAuth();
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
     const profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
     });
 
     if (!profile) {
@@ -24,9 +32,6 @@ export async function GET() {
 
     return NextResponse.json({ counts });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     console.error("Error fetching link counts:", error);
     return NextResponse.json(
       { error: "Failed to fetch link counts" },
@@ -34,4 +39,3 @@ export async function GET() {
     );
   }
 }
-

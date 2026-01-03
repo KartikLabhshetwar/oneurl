@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { getAvatarUrl } from "@/lib/utils";
-import { authClient } from "@/lib/auth-client";
 
 interface DashboardSidebarProps {
   user: {
@@ -128,17 +127,10 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
             <Button
               variant="destructive"
               className="w-full justify-start rounded-lg border border-red-200/50 shadow-sm hover:bg-red-600 hover:border-red-300/50 transition-colors"
-              onClick={async () => {
+              onClick={() => {
                 setIsPopoverOpen(false);
-                try {
-                  await authClient.signOut();
-                  router.push("/");
-                  router.refresh();
-                } catch (error) {
-                  console.error("Sign out error:", error);
-                  router.push("/");
-                  router.refresh();
-                }
+                router.push("/");
+                router.refresh();
               }}
             >
               <LogOut className="h-4 w-4" />

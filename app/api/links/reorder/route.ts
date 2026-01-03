@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { linkService } from "@/lib/services/link.service";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
 const reorderSchema = z.object({
+  userId: z.string(),
   linkIds: z.array(z.string()),
 });
 
 export async function POST(req: Request) {
   try {
-    const session = await requireAuth();
-    const body = await req.json();
-    const { linkIds } = reorderSchema.parse(body);
+    const body = await reorderSchema.parse(await req.json());
+    const { userId, linkIds } = body;
 
     const profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
     });
 
     if (!profile) {
@@ -41,9 +40,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ path: string[]; message: string }> };
       const firstError = zodError.issues[0];
@@ -58,4 +54,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 
 interface SignInButtonProps {
@@ -25,15 +24,6 @@ export function SignInButton({
 
   const handleSignIn = async () => {
     setIsLoading(true);
-    try {
-      await authClient.signIn.social({
-        provider,
-        callbackURL: callbackURL || "/",
-      });
-    } catch (error) {
-      console.error("Sign in error:", error);
-      setIsLoading(false);
-    }
   };
 
   return (

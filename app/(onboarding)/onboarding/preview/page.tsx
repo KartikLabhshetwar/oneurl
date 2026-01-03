@@ -1,21 +1,9 @@
-import { requireAuth } from "@/lib/auth-guard";
 import { profileService } from "@/lib/services/profile.service";
 import PreviewClient from "./preview-client";
 import { getAvatarUrl } from "@/lib/utils";
 import { PreviewWrapper } from "./preview-wrapper";
 
 export default async function PreviewPage() {
-  const session = await requireAuth();
-  const profile = await profileService.getByUserId(session.user.id);
-
-  if (!profile) {
-    return (
-      <div className="w-full max-w-md mx-auto px-4 py-12">
-        <p>Profile not found</p>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col gap-8 px-4 py-12">
       <div className="space-y-2 text-center">
@@ -27,12 +15,12 @@ export default async function PreviewPage() {
 
       <div className="mx-auto w-full">
         <PreviewWrapper
-          initialName={profile.name}
-          initialUsername={profile.username}
-          initialBio={profile.bio || null}
-          initialAvatarUrl={getAvatarUrl(profile)}
-          initialTitle={profile.profile?.title || null}
-          initialCalLink={profile.profile?.calLink || null}
+          initialName=""
+          initialUsername={null}
+          initialBio={null}
+          initialAvatarUrl={null}
+          initialTitle={null}
+          initialCalLink={null}
         />
       </div>
 
@@ -40,4 +28,3 @@ export default async function PreviewPage() {
     </div>
   );
 }
-

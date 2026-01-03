@@ -1,16 +1,24 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { linkService } from "@/lib/services/link.service";
 import { db } from "@/lib/db";
 import { linkSchema } from "@/lib/validations/schemas";
 import { fetchMetadataFromBackend } from "@/lib/utils/backend-client";
 import { fetchAndUploadLinkPreviewImage, getFallbackPreviewImage } from "@/lib/utils/link-preview-image";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const session = await requireAuth();
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
     const profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
     });
 
     if (!profile) {
@@ -21,9 +29,6 @@ export async function GET() {
 
     return NextResponse.json({ links });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     return NextResponse.json(
       { error: "Failed to fetch links" },
       { status: 500 }
@@ -33,16 +38,22 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await requireAuth();
-    const body = await req.json();
+    const { userId, ...body } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     let profile = await db.profile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
     });
 
     if (!profile) {
       profile = await db.profile.create({
-        data: { userId: session.user.id },
+        data: { userId },
       });
     }
 
@@ -63,7 +74,6 @@ export async function POST(req: Request) {
               icon: link.icon,
             });
 
-            // Process preview in background for faster response
             if (!link.icon) {
               (async () => {
                 try {
@@ -127,9 +137,7 @@ export async function POST(req: Request) {
     const validated = linkSchema.parse(body);
     const link = await linkService.create(profile.id, validated);
 
-    // Return link immediately, process preview in background
     if (!validated.icon) {
-      // Don't await - process in background
       (async () => {
         try {
           const metadata = await fetchMetadataFromBackend(validated.url);
@@ -180,9 +188,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ link });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ path: string[]; message: string }> };
       const firstError = zodError.issues[0];

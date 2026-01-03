@@ -6,7 +6,6 @@
 
 ## Features
 
-- **Google OAuth Authentication** - Secure and seamless sign-in with your existing Google account
 - **Custom Profile Pages** - Create personalized profile pages with your unique username
 - **Link Management** - Add, edit, and reorganize your links effortlessly
 - **Deep Analytics** - Track clicks and view detailed insights about your audience engagement
@@ -20,7 +19,6 @@
 - **Backend:** Express.js (separate service for link previews)
 - **Language:** TypeScript
 - **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** Better Auth
 - **File Upload:** UploadThing + React Dropzone
 - **State Management:** TanStack Query (React Query)
 - **Styling:** Tailwind CSS
@@ -33,7 +31,6 @@ Before you begin, ensure you have:
 
 - Node.js 20+ or Bun installed
 - PostgreSQL database (local or cloud like Neon)
-- Google OAuth credentials
 - UploadThing account (free tier available)
 
 ## Getting Started
@@ -60,14 +57,6 @@ Create a `.env` file in the root directory:
 ```env
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/oneurl"
-
-# Better Auth
-BETTER_AUTH_SECRET="your-secret-key-here"
-BETTER_AUTH_URL="http://localhost:3000"
-
-# Google OAuth
-GOOGLE_CLIENT_ID="your-google-client-id"
-GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # UploadThing - for file uploads
 UPLOADTHING_TOKEN="your-uploadthing-token"
@@ -133,8 +122,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. The backend
 ```
 oneurl/
 ├── app/                    # Next.js app directory
-│   ├── (auth)/            # Authentication routes (login, signup)
-│   ├── (dashboard)/       # Dashboard routes (protected)
+│   ├── (dashboard)/       # Dashboard routes
 │   ├── (onboarding)/      # Onboarding flow
 │   ├── [username]/        # Public profile pages
 │   └── api/               # API routes

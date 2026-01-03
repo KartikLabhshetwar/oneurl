@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth-guard";
 import { profileService } from "@/lib/services/profile.service";
 import { db } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
-    const session = await requireAuth();
+    const { userId } = await req.json();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
 
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       include: { profile: { include: { links: true } } },
     });
 
@@ -26,21 +32,17 @@ export async function POST(req: Request) {
       );
     }
 
-    await profileService.publishProfile(session.user.id);
+    await profileService.publishProfile(userId);
     await db.user.update({
-      where: { id: session.user.id },
+      where: { id: userId },
       data: { isOnboarded: true },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("redirect")) {
-      throw error;
-    }
     return NextResponse.json(
       { error: "Failed to publish profile" },
       { status: 500 }
     );
   }
 }
-

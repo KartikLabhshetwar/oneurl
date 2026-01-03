@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 import { profileService } from "@/lib/services/profile.service";
 
 export async function POST(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    const { username } = await req.json();
+    const { username, userId } = await req.json();
 
     if (!username) {
       return NextResponse.json(
@@ -17,7 +14,7 @@ export async function POST(req: Request) {
 
     const available = await profileService.checkUsernameAvailable(
       username,
-      session?.user?.id
+      userId
     );
 
     return NextResponse.json({ available });

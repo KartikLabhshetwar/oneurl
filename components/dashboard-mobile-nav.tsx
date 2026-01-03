@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -51,15 +50,8 @@ export function DashboardMobileNav({ user }: DashboardMobileNavProps) {
 
   const handleSignOut = async () => {
     setIsPopoverOpen(false);
-    try {
-      await authClient.signOut();
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error("Sign out error:", error);
-      router.push("/");
-      router.refresh();
-    }
+    router.push("/");
+    router.refresh();
   };
 
   return (
