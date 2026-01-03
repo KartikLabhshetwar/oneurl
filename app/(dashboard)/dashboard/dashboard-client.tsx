@@ -46,7 +46,6 @@ import {
   AlertDialogClose,
 } from "@/components/ui/alert-dialog";
 import { LinkDialog } from "@/components/link-dialog";
-import { IconLinkDialog } from "@/components/icon-link-dialog";
 import { ProfilePreview } from "@/components/profile-preview";
 import { ShareDialog } from "@/components/share-dialog";
 import { SortableDashboardIconLink } from "@/components/sortable-dashboard-icon-link";
@@ -74,10 +73,8 @@ interface DashboardClientProps {
 export function DashboardClient({ initialProfile }: DashboardClientProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [iconLinkDialogOpen, setIconLinkDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [linkToEdit, setLinkToEdit] = useState<Link | null>(null);
-  const [iconLinkToEdit, setIconLinkToEdit] = useState<Link | null>(null);
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
   const [linkToggling, setLinkToggling] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -139,35 +136,6 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
       setLinkToEdit(null);
     }
     setEditDialogOpen(open);
-  };
-
-  const handleIconLinkClick = (link: Link) => {
-    setIconLinkToEdit(link);
-    setIconLinkDialogOpen(true);
-  };
-
-  const handleIconLinkSave = async (data: { title: string; url: string; icon?: string | null }) => {
-    if (!iconLinkToEdit) return;
-    await updateLink.mutateAsync({
-      id: iconLinkToEdit.id,
-      data,
-    });
-    setIconLinkDialogOpen(false);
-    setIconLinkToEdit(null);
-  };
-
-  const handleIconLinkRemove = async () => {
-    if (!iconLinkToEdit) return;
-    await deleteLink.mutateAsync(iconLinkToEdit.id);
-    setIconLinkDialogOpen(false);
-    setIconLinkToEdit(null);
-  };
-
-  const handleIconLinkDialogChange = (open: boolean) => {
-    if (!open) {
-      setIconLinkToEdit(null);
-    }
-    setIconLinkDialogOpen(open);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -342,7 +310,8 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
                                   <SortableDashboardIconLink
                                     key={link.id}
                                     link={link}
-                                    onEdit={handleIconLinkClick}
+                                    onEdit={handleEditClick}
+                                    onDelete={handleDeleteClick}
                                     isDeleting={isDeleting}
                                     isToggling={isToggling}
                                   />
@@ -420,7 +389,7 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
               </div>
             )}
           </div>
-          <div className="bg-gradient-to-b from-background to-muted/20 p-4 rounded-lg overflow-auto max-h-[calc(100vh-200px)]">
+          <div className="bg-linear-to-b from-background to-muted/20 p-4 rounded-lg overflow-auto max-h-[calc(100vh-200px)]">
             <ProfilePreview
               name={displayProfile.name}
               username={displayProfile.username}
@@ -453,15 +422,6 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
         title="Edit Link"
         description="Update the title and URL for this link."
         submitLabel="Save Changes"
-      />
-
-      <IconLinkDialog
-        open={iconLinkDialogOpen}
-        onOpenChange={handleIconLinkDialogChange}
-        onSave={handleIconLinkSave}
-        onRemove={handleIconLinkRemove}
-        isPending={updateLink.isPending}
-        link={iconLinkToEdit}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -499,4 +459,3 @@ export function DashboardClient({ initialProfile }: DashboardClientProps) {
     </div>
   );
 }
-

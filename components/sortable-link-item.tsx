@@ -3,7 +3,7 @@
 import type * as React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Edit, Trash2, BarChart3 } from "lucide-react";
+import { GripVertical, Pencil, Trash2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -66,10 +66,10 @@ export function SortableLinkItem({
     <Button
       variant="ghost"
       size="sm"
-      className="h-5 w-5 p-0"
+      className="h-8 w-8 p-0 text-zinc-500 hover:text-foreground"
       onClick={() => onEdit(link)}
     >
-      <Edit className="h-3 w-3" />
+      <Pencil className="h-4 w-4" />
     </Button>
   );
 
@@ -115,10 +115,6 @@ export function SortableLinkItem({
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-2">
               <p className="font-medium truncate">{link.title}</p>
-              <Tooltip>
-                <TooltipTrigger render={editButton as React.ReactElement} />
-                <TooltipPopup>Edit link</TooltipPopup>
-              </Tooltip>
             </div>
             <div className="flex items-center gap-2">
               <Tooltip>
@@ -140,12 +136,17 @@ export function SortableLinkItem({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger render={switchElement as React.ReactElement} />
               <TooltipPopup>
                 {link.isActive ? "Disable link" : "Enable link"}
               </TooltipPopup>
+            </Tooltip>
+            <div className="w-px h-6 bg-zinc-200 mx-1" />
+            <Tooltip>
+              <TooltipTrigger render={editButton as React.ReactElement} />
+              <TooltipPopup>Edit link</TooltipPopup>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger render={deleteButton as React.ReactElement} />
@@ -157,4 +158,3 @@ export function SortableLinkItem({
     </TooltipProvider>
   );
 }
-

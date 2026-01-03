@@ -5,41 +5,43 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LinkDialog } from "@/components/link-dialog";
-import { IconLinkDialog } from "@/components/icon-link-dialog";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { toastSuccess, toastError } from "@/lib/toast";
 import { IconLink } from "@/components/icon-link";
-
-type Link = {
-  id: string;
-  title: string;
-  url: string;
-  icon?: string | null;
-  position?: number;
-  isActive?: boolean;
-};
+import type { Link } from "@/lib/hooks/use-links";
 
 export default function LinksPage() {
   const router = useRouter();
   const [links, setLinks] = useState<Link[]>([]);
   const [globalError, setGlobalError] = useState("");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [iconLinkDialogOpen, setIconLinkDialogOpen] = useState(false);
-  const [iconLinkToEdit, setIconLinkToEdit] = useState<Link | null>(null);
+  const [editingLink, setEditingLink] = useState<Link | null>(null);
 
   const handleAddLink = async (data: { title: string; url: string; icon?: string | null }) => {
-    const newLink: Link = {
-      id: `temp-${Date.now()}`,
-      title: data.title,
-      url: data.url,
-      icon: data.icon ?? null,
-      position: links.length,
-      isActive: true,
-    };
-    setLinks([...links, newLink]);
+    if (editingLink) {
+      // Update existing link
+      setLinks(links.map((link) => 
+        link.id === editingLink.id
+          ? { ...link, title: data.title, url: data.url, icon: data.icon ?? null }
+          : link
+      ));
+      toastSuccess("Link updated", `${data.title} has been updated`);
+      setEditingLink(null);
+    } else {
+      // Add new link
+      const newLink: Link = {
+        id: `temp-${Date.now()}`,
+        title: data.title,
+        url: data.url,
+        icon: data.icon ?? null,
+        position: links.length,
+        isActive: true,
+      };
+      setLinks([...links, newLink]);
+      toastSuccess("Link added", `${data.title} has been added to your profile`);
+    }
     setAddDialogOpen(false);
     setGlobalError("");
-    toastSuccess("Link added", `${data.title} has been added to your profile`);
   };
 
   const removeLink = (id: string) => {
@@ -51,31 +53,9 @@ export default function LinksPage() {
     }
   };
 
-  const handleIconLinkClick = (link: Link) => {
-    setIconLinkToEdit({
-      ...link,
-      position: link.position ?? 0,
-      isActive: link.isActive ?? true,
-    });
-    setIconLinkDialogOpen(true);
-  };
-
-  const handleIconLinkSave = async (data: { title: string; url: string; icon?: string | null }) => {
-    if (!iconLinkToEdit) return;
-    setLinks(links.map(link => 
-      link.id === iconLinkToEdit.id 
-        ? { ...link, title: data.title, url: data.url, icon: data.icon }
-        : link
-    ));
-    setIconLinkDialogOpen(false);
-    setIconLinkToEdit(null);
-  };
-
-  const handleIconLinkRemove = async () => {
-    if (!iconLinkToEdit) return;
-    removeLink(iconLinkToEdit.id);
-    setIconLinkDialogOpen(false);
-    setIconLinkToEdit(null);
+  const handleEditLink = (link: Link) => {
+    setEditingLink(link);
+    setAddDialogOpen(true);
   };
 
   const handleContinue = async () => {
@@ -123,7 +103,10 @@ export default function LinksPage() {
 
         <div className="flex justify-center">
           <Button
-            onClick={() => setAddDialogOpen(true)}
+            onClick={() => {
+              setEditingLink(null);
+              setAddDialogOpen(true);
+            }}
             variant="outline"
             className="w-full"
           >
@@ -139,7 +122,7 @@ export default function LinksPage() {
         {links.length > 0 && (
           <div className="space-y-6">
             {(() => {
-              const iconLinks = links.filter((link) => link.icon);
+              const iconLinks = links.filter((link) => !!link.icon);
               const mainLinks = links.filter((link) => !link.icon);
 
               return (
@@ -149,11 +132,28 @@ export default function LinksPage() {
                       <h3 className="text-xs font-medium text-zinc-600">Icon Links</h3>
                       <div className="flex items-center gap-3 flex-wrap">
                         {iconLinks.map((link) => (
-                          <div key={link.id}>
-                            <IconLink 
-                              link={{ ...link, position: link.position ?? 0, isActive: link.isActive ?? true }} 
-                              onClick={() => handleIconLinkClick(link)}
-                            />
+                          <div key={link.id} className="relative group bg-zinc-50 rounded-xl p-1 border border-zinc-100 flex items-center pr-2 gap-2">
+                            <div className="pointer-events-none">
+                                <IconLink 
+                                    link={{ ...link, position: link.position ?? 0, isActive: link.isActive ?? true }} 
+                                />
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => handleEditLink(link)}
+                                    className="p-1.5 hover:bg-zinc-200 rounded-lg text-zinc-500 hover:text-zinc-900 transition-colors"
+                                    title="Edit"
+                                >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    onClick={() => removeLink(link.id)}
+                                    className="p-1.5 hover:bg-zinc-200 rounded-lg text-zinc-500 hover:text-red-600 transition-colors"
+                                    title="Delete"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -171,14 +171,24 @@ export default function LinksPage() {
                                 <p className="font-medium truncate text-xs">{link.title}</p>
                                 <p className="text-xs text-zinc-500 truncate mt-0.5">{link.url}</p>
                               </div>
-                              <Button
-                                variant="destructive-outline"
-                                size="sm"
-                                onClick={() => removeLink(link.id)}
-                                className="ml-4 shrink-0"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center gap-1 ml-4 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditLink(link)}
+                                  className="h-8 w-8 p-0 border-zinc-200"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="destructive-outline"
+                                  size="sm"
+                                  onClick={() => removeLink(link.id)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </CardContent>
                           </Card>
                         ))}
@@ -193,25 +203,17 @@ export default function LinksPage() {
 
         <LinkDialog
           open={addDialogOpen}
-          onOpenChange={setAddDialogOpen}
-          onSubmit={handleAddLink}
-          title="Add New Link"
-          description="Add a new link to your profile. Enter a title and URL."
-          submitLabel="Add Link"
-        />
-
-        <IconLinkDialog
-          open={iconLinkDialogOpen}
           onOpenChange={(open) => {
+            setAddDialogOpen(open);
             if (!open) {
-              setIconLinkToEdit(null);
+                 setTimeout(() => setEditingLink(null), 300);
             }
-            setIconLinkDialogOpen(open);
           }}
-          onSave={handleIconLinkSave}
-          onRemove={handleIconLinkRemove}
-          isPending={false}
-          link={iconLinkToEdit}
+          onSubmit={handleAddLink}
+          title={editingLink ? "Edit Link" : "Add New Link"}
+          description={editingLink ? "Edit your link details below." : "Add a new link to your profile. Enter a title and URL."}
+          submitLabel={editingLink ? "Update Link" : "Add Link"}
+          initialData={editingLink}
         />
 
         <div className="flex justify-center pt-4">
@@ -228,4 +230,3 @@ export default function LinksPage() {
     </div>
   );
 }
-

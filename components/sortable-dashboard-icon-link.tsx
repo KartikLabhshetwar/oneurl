@@ -5,7 +5,7 @@ import type * as React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Link } from "@/lib/hooks/use-links";
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -17,6 +17,7 @@ import {
 interface SortableDashboardIconLinkProps {
   link: Link;
   onEdit: (link: Link) => void;
+  onDelete: (id: string) => void;
   isDeleting?: boolean;
   isToggling?: boolean;
 }
@@ -124,6 +125,7 @@ function getSocialIconTitle(url: string): string {
 export function SortableDashboardIconLink({
   link,
   onEdit,
+  onDelete,
   isDeleting = false,
   isToggling = false,
 }: SortableDashboardIconLinkProps) {
@@ -151,6 +153,12 @@ export function SortableDashboardIconLink({
     e.preventDefault();
     e.stopPropagation();
     onEdit(link);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete(link.id);
   };
 
   const tooltipText = link.title || linkTitle;
@@ -201,26 +209,44 @@ export function SortableDashboardIconLink({
           <TooltipPopup>{tooltipText}</TooltipPopup>
         </Tooltip>
         {isHovered && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full shadow-sm z-10"
-                  onClick={handleEditClick}
-                  aria-label={`Edit ${tooltipText}`}
-                >
-                  <Pencil className="h-3 w-3" />
-                </Button> as React.ReactElement
-              }
-            />
-            <TooltipPopup>Edit {tooltipText}</TooltipPopup>
-          </Tooltip>
+          <div className="absolute -top-3 -right-3 flex gap-1 z-10 transition-opacity duration-200">
+             <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="h-6 w-6 p-0 rounded-full shadow-md bg-white border border-zinc-200 hover:bg-zinc-100"
+                    onClick={handleEditClick}
+                    aria-label={`Edit ${tooltipText}`}
+                  >
+                    <Pencil className="h-3 w-3 text-zinc-600" />
+                  </Button> as React.ReactElement
+                }
+              />
+              <TooltipPopup>Edit</TooltipPopup>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    className="h-6 w-6 p-0 rounded-full shadow-md border border-red-200"
+                    onClick={handleDeleteClick}
+                    aria-label={`Delete ${tooltipText}`}
+                  >
+                    <Trash2 className="h-3 w-3 text-white" />
+                  </Button> as React.ReactElement
+                }
+              />
+              <TooltipPopup>Delete</TooltipPopup>
+            </Tooltip>
+          </div>
         )}
       </div>
     </TooltipProvider>
   );
 }
-
