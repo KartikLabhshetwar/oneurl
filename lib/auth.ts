@@ -28,6 +28,20 @@ const getTrustedOrigins = (): string[] => {
   return origins;
 };
 
+const getCookieDomain = (): string | undefined => {
+  if (!baseURL || process.env.NODE_ENV !== "production") return undefined;
+  const url = new URL(baseURL);
+  const hostname = url.hostname;
+  
+  if (hostname.startsWith("www.")) {
+    return hostname.replace("www.", "");
+  }
+  if (hostname.includes(".") && !hostname.includes("localhost")) {
+    return hostname;
+  }
+  return undefined;
+};
+
 export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: "postgresql",
@@ -35,6 +49,17 @@ export const auth = betterAuth({
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: getTrustedOrigins(),
+  advanced: {
+    crossSubDomainCookies: process.env.NODE_ENV === "production" ? {
+      enabled: true,
+      domain: getCookieDomain(),
+    } : undefined,
+    useSecureCookies: process.env.NODE_ENV === "production",
+    defaultCookieAttributes: {
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
