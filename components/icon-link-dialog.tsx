@@ -33,6 +33,9 @@ function getSocialIconTitle(url: string): string {
   if (lowerUrl.includes("medium")) return "Medium";
   if (lowerUrl.includes("youtube")) return "YouTube";
   if (lowerUrl.includes("instagram")) return "Instagram";
+  if (lowerUrl.includes("leetcode")) return "LeetCode";
+  if (lowerUrl.includes("codeforces")) return "Codeforces";
+  if (lowerUrl.includes("codechef")) return "CodeChef";
   return "Social Media";
 }
 
@@ -41,15 +44,15 @@ function extractHandle(url: string): string {
     const urlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
     const pathname = urlObj.pathname;
     let handle = pathname.replace(/^\//, "").replace(/\/$/, "");
-    
+
     if (handle.startsWith("@")) {
       handle = handle.substring(1);
     }
-    
+
     if (handle.startsWith("in/")) {
       handle = handle.substring(3);
     }
-    
+
     return handle || "";
   } catch {
     return "";
@@ -60,9 +63,9 @@ function buildUrlFromHandle(handle: string, originalUrl: string): string {
   try {
     const urlObj = new URL(originalUrl.startsWith("http") ? originalUrl : `https://${originalUrl}`);
     const domain = urlObj.hostname.toLowerCase();
-    
+
     const cleanHandle = handle.trim().replace(/^@/, "");
-    
+
     if (domain.includes("twitter") || domain.includes("x.com")) {
       return `https://x.com/${cleanHandle}`;
     }
@@ -90,7 +93,16 @@ function buildUrlFromHandle(handle: string, originalUrl: string): string {
     if (domain.includes("tiktok")) {
       return `https://tiktok.com/@${cleanHandle}`;
     }
-    
+    if (domain.includes("leetcode")) {
+      return `https://leetcode.com/u/${cleanHandle}`;
+    }
+    if (domain.includes("codeforces")) {
+      return `https://codeforces.com/profile/${cleanHandle}`;
+    }
+    if (domain.includes("codechef")) {
+      return `https://codechef.com/users/${cleanHandle}`;
+    }
+
     return originalUrl;
   } catch {
     return originalUrl;
@@ -147,8 +159,8 @@ export function IconLinkDialog({
 
     try {
       const newUrl = buildUrlFromHandle(handle.trim(), link.url);
-      const validated = linkSchema.parse({ 
-        title: link.title, 
+      const validated = linkSchema.parse({
+        title: link.title,
         url: newUrl,
         icon: link.icon || "🔗"
       });
